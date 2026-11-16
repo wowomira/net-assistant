@@ -1,0 +1,35 @@
+name: Verify paired portable resources
+on:
+  workflow_dispatch:
+  release:
+    types: [published]
+permissions:
+  contents: read
+jobs:
+  windows-portable:
+    runs-on: windows-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download matching private resource asset
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: pwsh
+        run: |
+          gh release download v0.10.0-collaboration.1 --repo $env:GITHUB_REPOSITORY --pattern runtime-resources-win-x64.zip
+          $lock = Get-Content runtime.lock.json -Raw | ConvertFrom-Json
+          if ((Get-FileHash runtime-resources-win-x64.zip -Algorithm SHA256).Hash.ToLowerInvariant() -ne $lock.release.sha256) {
+            throw "Resource archive hash mismatch"
+          }
+          Expand-Archive runtime-resources-win-x64.zip -DestinationPath .
+      - name: Rebuild with only project-local tools and offline package managers
+        run: powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\bootstrap.ps1 setup
+      - name: Independent database and runtime inspection
+        run: |
+          powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\bootstrap.ps1 init
+          powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\bootstrap.ps1 check
+          powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\bootstrap.ps1 doctor
+      - name: Unit, HTTP and frontend regression tests
+        run: powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\bootstrap.ps1 test
+      - name: Verify committed source manifest
+        run: .\.runtime\python\python.exe scripts/collaboration_snapshot.py --verify

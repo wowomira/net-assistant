@@ -1,0 +1,8 @@
+# Exact installed versions verified on Windows / Python 3.13.7 (64-bit), 2026-11-14.
+-r requirements.txt
+colorama==0.4.6
+iniconfig==2.3.1
+packaging==26.3
+pluggy==1.7.0
+pygments==2.21.0
+pytest==9.2.0

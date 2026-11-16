@@ -1,0 +1,15 @@
+{
+  "name": "example-edit-before-use",
+  "targets": ["10.20.30.0/24"],
+  "exclude": ["10.20.30.1"],
+  "port_profile": "common-tcp-v1.json",
+  "source_address": "10.20.30.1",
+  "timeout_ms": 800,
+  "concurrency": 6,
+  "budget_seconds": 900,
+  "max_addresses": 1024,
+  "icmp_enabled": true,
+  "arp_enabled": true,
+  "allow_public": false,
+  "allow_loopback": false
+}

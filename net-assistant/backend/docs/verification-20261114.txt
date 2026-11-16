@@ -1,0 +1,48 @@
+Task 01 verification / 2026-11-14 / Windows
+Python: 3.13.7 / 64-bit
+Interpreter: <checkout-or-user-tool-path>
+Scope: local liveness only; no target scanning or database creation.
+
+> <checkout-or-user-tool-path>
+......                                                                   [100%]
+6 passed in 0.47s
+
+
+Exit code: 0
+
+> <checkout-or-user-tool-path>
+No broken requirements found.
+
+
+Exit code: 0
+
+> <checkout-or-user-tool-path>
+
+
+Exit code: 0
+
+> <checkout-or-user-tool-path>
+PASS: real HTTP liveness, OpenAPI, docs, readiness boundary (http://127.0.0.1:7452)
+INFO:     Started server process [45280]
+
+INFO:     Waiting for application startup.
+
+INFO:     Application startup complete.
+
+INFO:     Uvicorn running on http://127.0.0.1:7452 (Press CTRL+C to quit)
+
+INFO:     127.0.0.1:16749 - "GET /health/live HTTP/1.1" 200 OK
+
+INFO:     127.0.0.1:16750 - "GET /openapi.json HTTP/1.1" 200 OK
+
+INFO:     127.0.0.1:16751 - "GET /docs HTTP/1.1" 200 OK
+
+INFO:     127.0.0.1:16752 - "GET /health/ready HTTP/1.1" 404 Not Found
+
+
+Temporary server stopped; no permanent service was installed.
+
+
+Exit code: 0
+
+Business data directory exists: False

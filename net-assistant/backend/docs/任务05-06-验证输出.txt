@@ -1,0 +1,5 @@
+........................................................................ [ 60%]
+...............................................                          [100%]
+119 passed in 23.76s
+No broken requirements found.
+pytestExit=0 pipCheckExit=0 compileallExit=0

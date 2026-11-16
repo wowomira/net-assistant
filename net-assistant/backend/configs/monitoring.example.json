@@ -1,0 +1,7 @@
+{
+  "api_url": "http://127.0.0.1:18080",
+  "allowed_hosts": [],
+  "allow_public": false,
+  "allow_loopback": false,
+  "endpoints": []
+}

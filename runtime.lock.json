@@ -1,0 +1,65 @@
+{
+  "format": 1,
+  "app": "0.10.0",
+  "platform": "windows-x64",
+  "resource_manifest_sha256": "d7dfeb8ec4e48ff22d08da0f5e092f89182d1ffcf89e84e8fefeecc00e3d388f",
+  "artifacts": {
+    "python.zip": {
+      "url": "https://www.python.org/ftp/python/3.13.7/python-3.13.7-embed-amd64.zip",
+      "sha256": "f6cca216a359be84797cabb54149ce5e062afb16cc7567eb7fc51cacb2d86b65",
+      "bytes": 10922561
+    },
+    "node.zip": {
+      "url": "https://nodejs.org/dist/v24.11.0/node-v24.11.0-win-x64.zip",
+      "sha256": "1054540bce22b54ec7e50ebc078ec5d090700a77657607a58f6a64df21f49fdd",
+      "bytes": 36356854
+    },
+    "openssh.zip": {
+      "url": "https://github.com/PowerShell/Win32-OpenSSH/releases/download/v9.5.0.0p1-Beta/OpenSSH-Win64.zip",
+      "sha256": "bd48fe985d400402c278c485db20e6a82bc4c7f7d8e0ef5a81128f523096530c",
+      "bytes": 4856219
+    },
+    "gatus": {
+      "version": "v5.38.0",
+      "source": "https://github.com/TwiN/gatus/tree/v5.38.0",
+      "build": "backend/scripts/manage-gatus.ps1 -Action Build; Go 1.26.11; windows/amd64",
+      "license": "Apache-2.0; source and third-party license notices included"
+    },
+    "chromium": {
+      "version": "159.0.8154.6",
+      "playwright": "1.65.2",
+      "revision": "1255",
+      "source": "https://cdn.playwright.dev/builds/cft/159.0.8154.6/win64/chrome-headless-shell-win64.zip",
+      "license": "BSD-3-Clause and third-party notices retained in LICENSE.headless_shell",
+      "distribution": "Chromium headless shell (not Chrome for Testing full browser)"
+    },
+    "swagger": {
+      "version": "5.30.2",
+      "source": "https://registry.npmjs.org/swagger-ui-dist/5.30.2",
+      "license": "Apache-2.0; LICENSE and NOTICE retained"
+    }
+  },
+  "excluded": [
+    "Nmap and Npcap: user-provided official prerequisites, not redistributed",
+    "real internal-network data and seeds",
+    "accounts, credentials and personal configuration"
+  ],
+  "release": {
+    "repository": "wowomira/net-assistant-collaboration",
+    "tag": "v0.10.0-collaboration.1",
+    "asset": "runtime-resources-win-x64.zip",
+    "sha256": "f3590323616129d332852915f48304b586cbce15bd324a1e5932dcca0c3601a8",
+    "bytes": 297829409
+  },
+  "installed_files": {
+    ".runtime/python/python.exe": "d932e5e2f324d57f392e8fd063dcf6d0185be8a664c57c6d24e7762ed02c28ca",
+    ".runtime/python/python313.dll": "41ec4fc4e5bc8b207258590238f7f050b13fdfee84c4a7b1ecff6e945d031a10",
+    ".runtime/tools/node/node.exe": "b7d912484d42e7a0d0cb5b26a86410ec973a79ece7d61ad535e2d1a97a9026e1",
+    ".runtime/tools/node/npm.cmd": "21b46c69ad6e2f231f02a9e120f4ba6c8e75fef5a45637103002eab99f888ab8",
+    ".runtime/tools/openssh/ssh.exe": "e41e50a22dffeae8bb13bce4cb47b6c4aa0de4cdecbd62ef79d5046adc05a8b1",
+    ".runtime/tools/gatus/gatus.exe": "459f82b56da53731bf62bec2b7fcd115468c984575bdd47cd8b55eb2e917b68d",
+    ".runtime/tools/swagger/swagger-ui-bundle.js": "002503ad9e92c33a9c9e2f7d4910a6fba4dd9dd8c57cfdb53b090629df0f5787",
+    ".runtime/tools/swagger/swagger-ui.css": "bc5e8d5c013477cf1f35e2fb8ba1dff66be0f72f24e669a509635657145e1acb",
+    ".runtime/tools/browsers/chromium_headless_shell-1255/chrome-headless-shell-win64/chrome-headless-shell.exe": "b23921f57bcff971495917b208b63df393788525120c6ce23a79c1e3e1583114"
+  }
+}

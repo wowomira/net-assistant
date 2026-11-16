@@ -1,0 +1,27 @@
+name: Verify collaboration checkout
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          architecture: x64
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Bootstrap isolated runtime
+        run: python scripts/workspace.py setup --index-url https://pypi.org/simple
+      - name: Initialize independent empty database
+        run: python scripts/workspace.py init
+      - name: Verify readiness
+        run: python scripts/workspace.py check
+      - name: Unit tests and production build
+        run: python scripts/workspace.py test

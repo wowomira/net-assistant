@@ -1,0 +1,9 @@
+{
+  "name": "authorized-lab-daily",
+  "enabled": false,
+  "at": "09:00",
+  "utc_offset_minutes": 480,
+  "scan_config": "scope.example.json",
+  "database": "../data/inspection.sqlite",
+  "report_directory": "../reports"
+}

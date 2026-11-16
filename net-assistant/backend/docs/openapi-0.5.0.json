@@ -1,0 +1,2173 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "网维助手巡检后端",
+    "version": "0.5.0"
+  },
+  "paths": {
+    "/health/live": {
+      "get": {
+        "tags": [
+          "system"
+        ],
+        "summary": "检查后端进程是否能响应",
+        "description": "仅表示进程存活，不代表数据库、调度器或被测设备正常。",
+        "operationId": "getLiveness",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LivenessResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/discovery-jobs": {
+      "get": {
+        "tags": [
+          "discovery (read only)"
+        ],
+        "summary": "List Jobs",
+        "operationId": "listDiscoveryJobs",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^[0-9]{1,18}$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_JobView_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/discovery-jobs/{job_id}": {
+      "get": {
+        "tags": [
+          "discovery (read only)"
+        ],
+        "summary": "Get Job",
+        "operationId": "getDiscoveryJob",
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Job Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobView"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/discovery-jobs/{job_id}/hosts": {
+      "get": {
+        "tags": [
+          "discovery (read only)"
+        ],
+        "summary": "List Hosts",
+        "operationId": "listDiscoveredHosts",
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Job Id"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^[0-9]{1,18}$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_HostView_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/discovery-jobs/{job_id}/probes": {
+      "get": {
+        "tags": [
+          "discovery (read only)"
+        ],
+        "summary": "List Probes",
+        "operationId": "listDiscoveryProbes",
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Job Id"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^[0-9]{1,18}$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "name": "address",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Address"
+            }
+          },
+          {
+            "name": "method",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Method"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_ProbeView_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/assets": {
+      "get": {
+        "tags": [
+          "asset registry (read only)"
+        ],
+        "summary": "List Assets",
+        "operationId": "listAssets",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^[0-9]{1,18}$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_AssetView_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/assets/{asset_id}": {
+      "get": {
+        "tags": [
+          "asset registry (read only)"
+        ],
+        "summary": "Get Asset",
+        "operationId": "getAsset",
+        "parameters": [
+          {
+            "name": "asset_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Asset Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetView"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/assets/{asset_id}/observations": {
+      "get": {
+        "tags": [
+          "asset registry (read only)"
+        ],
+        "summary": "Observations",
+        "operationId": "listAssetObservations",
+        "parameters": [
+          {
+            "name": "asset_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Asset Id"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^[0-9]{1,18}$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_LinkedObservationView_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/assets/{asset_id}/audit": {
+      "get": {
+        "tags": [
+          "asset registry (read only)"
+        ],
+        "summary": "Audit",
+        "operationId": "listAssetAuditEvents",
+        "parameters": [
+          {
+            "name": "asset_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Asset Id"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^[0-9]{1,18}$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_AssetAuditView_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/discovery-hosts/{host_id}/asset-association": {
+      "get": {
+        "tags": [
+          "asset registry (read only)"
+        ],
+        "summary": "Association",
+        "operationId": "getDiscoveryAssetAssociation",
+        "parameters": [
+          {
+            "name": "host_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Host Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssociationView"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/scheduler": {
+      "get": {
+        "tags": [
+          "scheduler (read only)"
+        ],
+        "summary": "读取调度心跳与扫描结果；不会触发扫描",
+        "operationId": "getSchedulerStatus",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SchedulerView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/scheduler/runs": {
+      "get": {
+        "tags": [
+          "scheduler (read only)"
+        ],
+        "summary": "分页读取该计划的自动扫描记录，不包含手动扫描",
+        "operationId": "listScheduledRuns",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^[0-9]{1,18}$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_ScheduledRunView_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AssetAuditView": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "assetId": {
+            "type": "string",
+            "title": "Assetid"
+          },
+          "discoveryHostId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Discoveryhostid"
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "registered",
+              "linked",
+              "unlinked",
+              "updated"
+            ],
+            "title": "Action"
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason"
+          },
+          "actor": {
+            "type": "string",
+            "enum": [
+              "local_cli",
+              "automatic_discovery"
+            ],
+            "title": "Actor"
+          },
+          "assetRevision": {
+            "type": "integer",
+            "title": "Assetrevision"
+          },
+          "occurredAt": {
+            "type": "string",
+            "title": "Occurredat"
+          },
+          "details": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Details"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "assetId",
+          "discoveryHostId",
+          "action",
+          "reason",
+          "actor",
+          "assetRevision",
+          "occurredAt",
+          "details"
+        ],
+        "title": "AssetAuditView"
+      },
+      "AssetView": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "scopeId": {
+            "type": "string",
+            "title": "Scopeid"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "assetKind": {
+            "type": "string",
+            "title": "Assetkind"
+          },
+          "owner": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Owner"
+          },
+          "notes": {
+            "type": "string",
+            "title": "Notes"
+          },
+          "revision": {
+            "type": "integer",
+            "title": "Revision"
+          },
+          "createdAt": {
+            "type": "string",
+            "title": "Createdat"
+          },
+          "updatedAt": {
+            "type": "string",
+            "title": "Updatedat"
+          },
+          "managementStatus": {
+            "type": "string",
+            "enum": [
+              "managed",
+              "discovered"
+            ],
+            "title": "Managementstatus"
+          },
+          "registrationSource": {
+            "type": "string",
+            "enum": [
+              "manual",
+              "automatic"
+            ],
+            "title": "Registrationsource"
+          },
+          "identityStatus": {
+            "type": "string",
+            "enum": [
+              "manual_confirmed",
+              "observed_mac",
+              "mac_correlated",
+              "needs_review"
+            ],
+            "title": "Identitystatus"
+          },
+          "identityVerified": {
+            "type": "boolean",
+            "const": false,
+            "title": "Identityverified"
+          },
+          "collectionAccess": {
+            "type": "string",
+            "const": "not_enrolled",
+            "title": "Collectionaccess"
+          },
+          "hostMetrics": {
+            "type": "null",
+            "title": "Hostmetrics"
+          },
+          "hostMetricsStatus": {
+            "type": "string",
+            "const": "not_collected",
+            "title": "Hostmetricsstatus"
+          },
+          "linkedObservationCount": {
+            "type": "integer",
+            "title": "Linkedobservationcount"
+          },
+          "lastObservedAt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lastobservedat"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "scopeId",
+          "name",
+          "assetKind",
+          "owner",
+          "notes",
+          "revision",
+          "createdAt",
+          "updatedAt",
+          "managementStatus",
+          "registrationSource",
+          "identityStatus",
+          "identityVerified",
+          "collectionAccess",
+          "hostMetrics",
+          "hostMetricsStatus",
+          "linkedObservationCount",
+          "lastObservedAt"
+        ],
+        "title": "AssetView"
+      },
+      "AssociationView": {
+        "properties": {
+          "discoveryHostId": {
+            "type": "string",
+            "title": "Discoveryhostid"
+          },
+          "assetId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assetid"
+          },
+          "associationStatus": {
+            "type": "string",
+            "enum": [
+              "unlinked",
+              "linked"
+            ],
+            "title": "Associationstatus"
+          },
+          "requiresConfirmation": {
+            "type": "boolean",
+            "title": "Requiresconfirmation"
+          },
+          "candidates": {
+            "items": {
+              "$ref": "#/components/schemas/CandidateView"
+            },
+            "type": "array",
+            "title": "Candidates"
+          },
+          "ambiguous": {
+            "type": "boolean",
+            "title": "Ambiguous"
+          },
+          "candidatesTruncated": {
+            "type": "boolean",
+            "title": "Candidatestruncated"
+          },
+          "addressConflict": {
+            "type": "boolean",
+            "title": "Addressconflict"
+          },
+          "confirmable": {
+            "type": "boolean",
+            "title": "Confirmable"
+          },
+          "collectionAccess": {
+            "type": "string",
+            "const": "not_enrolled",
+            "title": "Collectionaccess"
+          },
+          "hint": {
+            "type": "string",
+            "title": "Hint"
+          },
+          "automaticDecision": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AutomaticDecisionView"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "discoveryHostId",
+          "assetId",
+          "associationStatus",
+          "requiresConfirmation",
+          "candidates",
+          "ambiguous",
+          "candidatesTruncated",
+          "addressConflict",
+          "confirmable",
+          "collectionAccess",
+          "hint"
+        ],
+        "title": "AssociationView"
+      },
+      "AutomaticDecisionView": {
+        "properties": {
+          "outcome": {
+            "type": "string",
+            "enum": [
+              "existing",
+              "registered",
+              "linked",
+              "skipped"
+            ],
+            "title": "Outcome"
+          },
+          "rule": {
+            "type": "string",
+            "enum": [
+              "preserve_explicit_link",
+              "no_direct_response",
+              "missing_or_invalid_mac",
+              "duplicate_mac_in_scan",
+              "ambiguous_mac_history",
+              "unique_mac_same_scope",
+              "new_mac"
+            ],
+            "title": "Rule"
+          },
+          "assetId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assetid"
+          },
+          "evidence": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Evidence"
+          },
+          "decidedAt": {
+            "type": "string",
+            "title": "Decidedat"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "outcome",
+          "rule",
+          "assetId",
+          "evidence",
+          "decidedAt"
+        ],
+        "title": "AutomaticDecisionView"
+      },
+      "CandidateView": {
+        "properties": {
+          "assetId": {
+            "type": "string",
+            "title": "Assetid"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "evidence": {
+            "type": "string",
+            "const": "same_scope_mac_history",
+            "title": "Evidence"
+          },
+          "identityVerified": {
+            "type": "boolean",
+            "const": false,
+            "title": "Identityverified"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "assetId",
+          "name",
+          "evidence",
+          "identityVerified"
+        ],
+        "title": "CandidateView"
+      },
+      "CapabilitiesView": {
+        "properties": {
+          "networkDiscovery": {
+            "type": "boolean",
+            "const": true,
+            "title": "Networkdiscovery",
+            "default": true
+          },
+          "automaticAssetRegistration": {
+            "type": "boolean",
+            "const": true,
+            "title": "Automaticassetregistration",
+            "default": true
+          },
+          "manualScanEntry": {
+            "type": "string",
+            "const": "local_cli",
+            "title": "Manualscanentry",
+            "default": "local_cli"
+          },
+          "dailyDiscoveryEntry": {
+            "type": "string",
+            "const": "independent_worker",
+            "title": "Dailydiscoveryentry",
+            "default": "independent_worker"
+          },
+          "windowsServiceAdapter": {
+            "type": "boolean",
+            "const": true,
+            "title": "Windowsserviceadapter",
+            "default": true
+          },
+          "crossPlatformProbeParity": {
+            "type": "boolean",
+            "const": false,
+            "title": "Crossplatformprobeparity",
+            "default": false
+          },
+          "hostMetrics": {
+            "type": "boolean",
+            "const": false,
+            "title": "Hostmetrics",
+            "default": false
+          },
+          "verifiedHostIdentity": {
+            "type": "boolean",
+            "const": false,
+            "title": "Verifiedhostidentity",
+            "default": false
+          },
+          "continuousInspection": {
+            "type": "boolean",
+            "const": false,
+            "title": "Continuousinspection",
+            "default": false
+          },
+          "incidentRecoveryRules": {
+            "type": "boolean",
+            "const": false,
+            "title": "Incidentrecoveryrules",
+            "default": false
+          },
+          "authenticatedWriteApi": {
+            "type": "boolean",
+            "const": false,
+            "title": "Authenticatedwriteapi",
+            "default": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "CapabilitiesView"
+      },
+      "DatabaseView": {
+        "properties": {
+          "state": {
+            "type": "string",
+            "enum": [
+              "missing",
+              "available",
+              "unavailable",
+              "not_checked"
+            ],
+            "title": "State"
+          },
+          "reasonCode": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reasoncode"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "state"
+        ],
+        "title": "DatabaseView"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "HostView": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "jobId": {
+            "type": "string",
+            "title": "Jobid"
+          },
+          "address": {
+            "type": "string",
+            "title": "Address"
+          },
+          "mac": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mac"
+          },
+          "discoveryMethods": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Discoverymethods"
+          },
+          "context": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Context"
+          },
+          "confidence": {
+            "type": "string",
+            "enum": [
+              "direct_response",
+              "candidate_only"
+            ],
+            "title": "Confidence"
+          },
+          "managementStatus": {
+            "type": "string",
+            "enum": [
+              "discovered",
+              "managed"
+            ],
+            "title": "Managementstatus"
+          },
+          "collectionAccess": {
+            "type": "string",
+            "enum": [
+              "not_enrolled",
+              "granted",
+              "revoked"
+            ],
+            "title": "Collectionaccess"
+          },
+          "assetKind": {
+            "type": "string",
+            "title": "Assetkind"
+          },
+          "observedAt": {
+            "type": "string",
+            "title": "Observedat"
+          },
+          "openPorts": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "title": "Openports"
+          },
+          "assetSource": {
+            "type": "string",
+            "const": "network_discovery",
+            "title": "Assetsource",
+            "default": "network_discovery"
+          },
+          "hostMetrics": {
+            "type": "null",
+            "title": "Hostmetrics"
+          },
+          "hostMetricsStatus": {
+            "type": "string",
+            "const": "not_collected",
+            "title": "Hostmetricsstatus",
+            "default": "not_collected"
+          },
+          "assetId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assetid"
+          },
+          "associationStatus": {
+            "type": "string",
+            "enum": [
+              "unlinked",
+              "linked"
+            ],
+            "title": "Associationstatus",
+            "default": "unlinked"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "jobId",
+          "address",
+          "mac",
+          "discoveryMethods",
+          "context",
+          "confidence",
+          "managementStatus",
+          "collectionAccess",
+          "assetKind",
+          "observedAt",
+          "openPorts"
+        ],
+        "title": "HostView"
+      },
+      "InvocationView": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "disabled",
+              "not_due",
+              "already_attempted",
+              "busy",
+              "completed",
+              "partial",
+              "failed",
+              "interrupted",
+              "timeout",
+              "invocation_failed"
+            ],
+            "title": "Status"
+          },
+          "checkedAt": {
+            "type": "string",
+            "title": "Checkedat"
+          },
+          "errorCode": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Errorcode"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "status",
+          "checkedAt"
+        ],
+        "title": "InvocationView"
+      },
+      "JobView": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "scopeId": {
+            "type": "string",
+            "title": "Scopeid"
+          },
+          "scopeRevision": {
+            "type": "integer",
+            "title": "Scoperevision"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "running",
+              "completed",
+              "partial",
+              "failed",
+              "interrupted"
+            ],
+            "title": "State"
+          },
+          "startedAt": {
+            "type": "string",
+            "title": "Startedat"
+          },
+          "finishedAt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finishedat"
+          },
+          "configSnapshot": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Configsnapshot"
+          },
+          "coverage": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Coverage"
+          },
+          "errorCode": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Errorcode"
+          },
+          "trigger": {
+            "type": "string",
+            "enum": [
+              "manual",
+              "scheduled"
+            ],
+            "title": "Trigger",
+            "default": "manual"
+          },
+          "scheduleRunId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Schedulerunid"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "scopeId",
+          "scopeRevision",
+          "state",
+          "startedAt",
+          "finishedAt",
+          "configSnapshot",
+          "coverage",
+          "errorCode"
+        ],
+        "title": "JobView"
+      },
+      "LinkedObservationView": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "assetId": {
+            "type": "string",
+            "title": "Assetid"
+          },
+          "discoveryHostId": {
+            "type": "string",
+            "title": "Discoveryhostid"
+          },
+          "jobId": {
+            "type": "string",
+            "title": "Jobid"
+          },
+          "scopeId": {
+            "type": "string",
+            "title": "Scopeid"
+          },
+          "address": {
+            "type": "string",
+            "title": "Address"
+          },
+          "mac": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mac"
+          },
+          "observedAt": {
+            "type": "string",
+            "title": "Observedat"
+          },
+          "confidence": {
+            "type": "string",
+            "title": "Confidence"
+          },
+          "confirmedAt": {
+            "type": "string",
+            "title": "Confirmedat"
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason"
+          },
+          "actor": {
+            "type": "string",
+            "enum": [
+              "local_cli",
+              "automatic_discovery"
+            ],
+            "title": "Actor"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "assetId",
+          "discoveryHostId",
+          "jobId",
+          "scopeId",
+          "address",
+          "mac",
+          "observedAt",
+          "confidence",
+          "confirmedAt",
+          "reason",
+          "actor"
+        ],
+        "title": "LinkedObservationView"
+      },
+      "LivenessResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "const": "alive",
+            "title": "Status",
+            "default": "alive"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "LivenessResponse"
+      },
+      "Page_AssetAuditView_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AssetAuditView"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nextcursor"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "title": "Page[AssetAuditView]"
+      },
+      "Page_AssetView_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AssetView"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nextcursor"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "title": "Page[AssetView]"
+      },
+      "Page_HostView_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/HostView"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nextcursor"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "title": "Page[HostView]"
+      },
+      "Page_JobView_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/JobView"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nextcursor"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "title": "Page[JobView]"
+      },
+      "Page_LinkedObservationView_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/LinkedObservationView"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nextcursor"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "title": "Page[LinkedObservationView]"
+      },
+      "Page_ProbeView_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ProbeView"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nextcursor"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "title": "Page[ProbeView]"
+      },
+      "Page_ScheduledRunView_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ScheduledRunView"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nextcursor"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "title": "Page[ScheduledRunView]"
+      },
+      "ProbeView": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "jobId": {
+            "type": "string",
+            "title": "Jobid"
+          },
+          "address": {
+            "type": "string",
+            "title": "Address"
+          },
+          "phase": {
+            "type": "string",
+            "title": "Phase"
+          },
+          "method": {
+            "type": "string",
+            "title": "Method"
+          },
+          "port": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Port"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "durationMs": {
+            "type": "number",
+            "title": "Durationms"
+          },
+          "reasonCode": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reasoncode"
+          },
+          "evidence": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Evidence"
+          },
+          "observedAt": {
+            "type": "string",
+            "title": "Observedat"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "jobId",
+          "address",
+          "phase",
+          "method",
+          "port",
+          "status",
+          "durationMs",
+          "reasonCode",
+          "evidence",
+          "observedAt"
+        ],
+        "title": "ProbeView"
+      },
+      "ScheduleView": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled"
+          },
+          "dailyAt": {
+            "type": "string",
+            "title": "Dailyat"
+          },
+          "utcOffsetMinutes": {
+            "type": "integer",
+            "title": "Utcoffsetminutes"
+          },
+          "localDate": {
+            "type": "string",
+            "title": "Localdate"
+          },
+          "nextDueAt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nextdueat"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "name",
+          "enabled",
+          "dailyAt",
+          "utcOffsetMinutes",
+          "localDate",
+          "nextDueAt"
+        ],
+        "title": "ScheduleView"
+      },
+      "ScheduledRunView": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "scheduleName": {
+            "type": "string",
+            "title": "Schedulename"
+          },
+          "localDate": {
+            "type": "string",
+            "title": "Localdate"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "running",
+              "completed",
+              "partial",
+              "failed",
+              "interrupted"
+            ],
+            "title": "State"
+          },
+          "startedAt": {
+            "type": "string",
+            "title": "Startedat"
+          },
+          "finishedAt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finishedat"
+          },
+          "errorCode": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Errorcode"
+          },
+          "jobId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Jobid"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "scheduleName",
+          "localDate",
+          "state",
+          "startedAt",
+          "finishedAt",
+          "errorCode",
+          "jobId"
+        ],
+        "title": "ScheduledRunView"
+      },
+      "SchedulerView": {
+        "properties": {
+          "checkedAt": {
+            "type": "string",
+            "title": "Checkedat"
+          },
+          "configured": {
+            "type": "boolean",
+            "title": "Configured"
+          },
+          "schedule": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ScheduleView"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "worker": {
+            "$ref": "#/components/schemas/WorkerView"
+          },
+          "database": {
+            "$ref": "#/components/schemas/DatabaseView"
+          },
+          "todayStatus": {
+            "type": "string",
+            "enum": [
+              "unconfigured",
+              "disabled",
+              "not_due",
+              "pending",
+              "unknown",
+              "running",
+              "completed",
+              "partial",
+              "failed",
+              "interrupted"
+            ],
+            "title": "Todaystatus"
+          },
+          "latestRun": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ScheduledRunView"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "todayRun": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ScheduledRunView"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "capabilities": {
+            "$ref": "#/components/schemas/CapabilitiesView"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "checkedAt",
+          "configured",
+          "schedule",
+          "worker",
+          "database",
+          "todayStatus",
+          "latestRun",
+          "todayRun",
+          "capabilities"
+        ],
+        "title": "SchedulerView"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      },
+      "WorkerView": {
+        "properties": {
+          "state": {
+            "type": "string",
+            "enum": [
+              "unknown",
+              "running",
+              "checking",
+              "stopped",
+              "error",
+              "stale"
+            ],
+            "title": "State"
+          },
+          "reasonCode": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reasoncode"
+          },
+          "heartbeatAt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Heartbeatat"
+          },
+          "startedAt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Startedat"
+          },
+          "lastCheckedAt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lastcheckedat"
+          },
+          "lastInvocation": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/InvocationView"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "errorCode": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Errorcode"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "state"
+        ],
+        "title": "WorkerView"
+      }
+    }
+  }
+}

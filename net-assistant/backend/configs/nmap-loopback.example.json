@@ -1,0 +1,15 @@
+{
+  "name": "nmap-loopback-example-not-live-scope",
+  "engine": "nmap",
+  "targets": ["127.0.0.1"],
+  "ports": [8000],
+  "http_ports": [8000],
+  "allow_loopback": true,
+  "icmp_enabled": false,
+  "arp_enabled": false,
+  "hostname_enabled": false,
+  "nmap_os_detection": false,
+  "nmap_host_timeout_seconds": 30,
+  "timeout_ms": 2000,
+  "budget_seconds": 60
+}

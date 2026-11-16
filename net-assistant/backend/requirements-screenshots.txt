@@ -1,0 +1,4 @@
+# Optional. Install into the scan worker's Python environment only when enabling
+# screenshots_enabled. Windows uses installed Microsoft Edge, not a user profile.
+# Tested separately from the live worker environment on 2026-11-15.
+playwright==1.65.2

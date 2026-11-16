@@ -1,0 +1,6 @@
+# Full development environment, including the optional protocol/screenshot adapters.
+# Python 3.13 x64 / Windows. Base pins remain in their original lock files.
+-r requirements-dev.txt
+-r requirements-collectors.txt
+-r requirements-switches.txt
+-r requirements-screenshots.txt

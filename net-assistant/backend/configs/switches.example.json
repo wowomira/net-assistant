@@ -1,0 +1,24 @@
+{
+  "enabled": false,
+  "database": "../data/inspection.sqlite",
+  "scan_config": "scope.example.json",
+  "storage": "../data/switch-runtime",
+  "targets": [],
+  "profiles": [
+    {
+      "id": "ruijie-readonly",
+      "username": "REPLACE_WITH_DEVICE_READONLY_USER",
+      "auth_key_env": "NET_ASSISTANT_SWITCH_AUTH",
+      "priv_key_env": "NET_ASSISTANT_SWITCH_PRIV",
+      "auth_protocol": "SHA256",
+      "priv_protocol": "AES128",
+      "context_name": ""
+    }
+  ],
+  "port": 161,
+  "interval_seconds": 300,
+  "timeout_seconds": 2,
+  "target_budget_seconds": 45,
+  "concurrency": 4,
+  "max_rows": 4096
+}

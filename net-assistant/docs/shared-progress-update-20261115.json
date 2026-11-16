@@ -1,0 +1,248 @@
+{
+  "performedAt": "2026-11-15T12:48:57.136127+08:00",
+  "operationKind": "developer_action_authorized_by_user_not_product_capability",
+  "target": "http://list.daihome.xyz:38080/#backend",
+  "liveTaskCount": 70,
+  "liveBundleSha256": "112c958efb3b110cf753a9ddf4b6eb16377ca85a41bd6ee6335712ccbb0c2233",
+  "before": {
+    "completedIds": [
+      "backend-9",
+      "goal-1",
+      "goal-2",
+      "goal-3",
+      "goal-4",
+      "goal-5",
+      "safety-1",
+      "safety-2",
+      "safety-3",
+      "scan-1",
+      "scan-5",
+      "scan-6"
+    ]
+  },
+  "operations": [
+    {
+      "id": "scan-3",
+      "category": "设备发现与巡检",
+      "title": "授权目标范围",
+      "description": "巡检仅作用于明确获准的设备或网段，并在界面中可见。",
+      "status": "已确定",
+      "evidence": "授权范围由配置限制；Demo显示真实扫描范围和排除项，不扩大授权。",
+      "completed": true
+    },
+    {
+      "id": "data-1",
+      "category": "后端与数据",
+      "title": "本地运行",
+      "description": "当前不使用云端产品，管理界面和数据在本地运行。",
+      "status": "已确定",
+      "evidence": "巡检程序、API、数据库与Demo在管理电脑本地运行，不依赖云端产品。",
+      "completed": true
+    },
+    {
+      "id": "data-2",
+      "category": "后端与数据",
+      "title": "本地数据存储",
+      "description": "未来巡检库独立使用本地 SQLite、SQLAlchemy 2 与 Alembic；统一串行写入口、短事务和外键，首版不启用 WAL；不改现有进度库。",
+      "status": "已确定",
+      "evidence": "独立SQLite、SQLAlchemy、Alembic、外键与串行写入口已实现；未改共享进度库结构。",
+      "completed": true
+    },
+    {
+      "id": "data-5",
+      "category": "后端与数据",
+      "title": "数据导出",
+      "description": "首版包含管理员本机导出检查流水；导出不等于完整备份，格式和大小边界随具体响应契约细化，不冒充已实现。",
+      "status": "已确定",
+      "evidence": "本机CLI已支持真实扫描记录与探测流水导出；不把导出当完整备份。",
+      "completed": true
+    },
+    {
+      "id": "backend-13",
+      "category": "后端与数据",
+      "title": "说明站进度与巡检系统隔离",
+      "description": "保留现有 Node /api/progress、真实勾选及稳定旧 ID；独立建立未来巡检项目和数据库，不把说明站当已实现巡检系统。",
+      "status": "已确定",
+      "evidence": "说明站进度服务与实际巡检工程/数据库隔离；保留原任务ID及其他团队勾选。",
+      "completed": true
+    }
+  ],
+  "after": {
+    "completedIds": [
+      "backend-13",
+      "backend-9",
+      "data-1",
+      "data-2",
+      "data-5",
+      "goal-1",
+      "goal-2",
+      "goal-3",
+      "goal-4",
+      "goal-5",
+      "safety-1",
+      "safety-2",
+      "safety-3",
+      "scan-1",
+      "scan-3",
+      "scan-5",
+      "scan-6"
+    ]
+  },
+  "existingProgressPreserved": true,
+  "notMarked": [
+    {
+      "id": "backend-1",
+      "category": "后端与数据",
+      "title": "后端技术栈与模块化单体",
+      "description": "Python 3.13 64 位、FastAPI、Pydantic 2、SQLAlchemy 2、Alembic、SQLite；HTTPX 与 APScheduler 3.x。补丁版本实现时验证锁定，尚未安装或开发。",
+      "status": "已确定"
+    },
+    {
+      "id": "backend-2",
+      "category": "后端与数据",
+      "title": "统一调度与执行链路",
+      "description": "定时、手动、复查共用任务和检测链路；内存调度重建、受控并发、任务排队有界，网络检测不持有数据库事务。",
+      "status": "已确定"
+    },
+    {
+      "id": "backend-3",
+      "category": "后端与数据",
+      "title": "任务幂等与配置版本",
+      "description": "同版本活动任务复用，旧版本冲突明确返回；运行任务用配置快照，旧结果只存历史，不覆盖新配置，手动与复查使用幂等键。",
+      "status": "已确定"
+    },
+    {
+      "id": "backend-4",
+      "category": "后端与数据",
+      "title": "五组状态与未知处理",
+      "description": "分别表达任务、单次观测、健康、新鲜度与事件；indeterminate 清零连续计数、健康 unknown、保留活动事件，过期不冒充正常。",
+      "status": "已确定"
+    },
+    {
+      "id": "backend-5",
+      "category": "后端与数据",
+      "title": "默认超时与异常恢复阈值",
+      "description": "默认周期 10 秒、超时 2000 毫秒、连续失败 3 次、连续成功 2 次、三周期过期；这些是初始配置，不是性能验收。",
+      "status": "已确定"
+    },
+    {
+      "id": "backend-6",
+      "category": "界面与操作",
+      "title": "OpenAPI 与生成客户端",
+      "description": "Pydantic/OpenAPI 单一来源，生成 TypeScript 客户端并锁生成器；camelCase、UTC RFC 3339、毫秒和显式 null，统一错误与契约测试。",
+      "status": "已确定"
+    },
+    {
+      "id": "backend-7",
+      "category": "界面与操作",
+      "title": "完整版本化巡检接口",
+      "description": "巡检使用 /api/v1，含快照、设备、检查项、任务、流水、事件、备注、复查、会话、导出及健康接口；旧六类示意不再当完整规格。",
+      "status": "已确定"
+    },
+    {
+      "id": "backend-8",
+      "category": "安全边界",
+      "title": "本机管理员与实验网只读",
+      "description": "修改、任务、备注、导出、登录只接受回环来源；校验 Host/Origin、会话和 CSRF，不信转发头，首版无反向代理或远程管理。",
+      "status": "已确定"
+    },
+    {
+      "id": "backend-10",
+      "category": "后端与数据",
+      "title": "巡检数据保留与证据上限",
+      "description": "流水与任务 7 天，已结束事件及备注 180 天，活动事件不自动删除；关键证据独立快照，单条最多 2 KiB，不存完整 HTTP 正文。",
+      "status": "已确定"
+    },
+    {
+      "id": "backend-11",
+      "category": "后端与数据",
+      "title": "存储故障与重启中断",
+      "description": "数据库不可写时拒收新检测并报告系统异常；遗留任务 interrupted，重启清会话和重建调度，不无限补跑。",
+      "status": "已确定"
+    },
+    {
+      "id": "backend-12",
+      "category": "测试与验收",
+      "title": "契约权限与可靠性专项验收",
+      "description": "测试配置切换、重叠幂等、事务失败、备份恢复、远程写拒绝、伪造转发头和 CSRF；本机测试与四机联调分开记录。",
+      "status": "已确定"
+    },
+    {
+      "id": "scan-2",
+      "category": "设备发现与巡检",
+      "title": "设备清单来源",
+      "description": "首版由管理员手动登记授权 IPv4 目标，不实现自动发现整个网段；名称和 IP 不充当稳定主键。",
+      "status": "已确定"
+    },
+    {
+      "id": "scan-4",
+      "category": "设备发现与巡检",
+      "title": "设备基础信息",
+      "description": "设备保存 UUID、名称、IPv4、启停、设备检查周期、配置版本和创建/更新时间；实际地址与备注待实机登记。",
+      "status": "已确定"
+    },
+    {
+      "id": "scan-7",
+      "category": "设备发现与巡检",
+      "title": "自动巡检间隔",
+      "description": "同设备启用检查项使用同一周期，默认 10 秒，可调 5～300 秒；错过周期合并、不无限补跑，页面读取不触发检测。",
+      "status": "已确定"
+    },
+    {
+      "id": "scan-8",
+      "category": "设备发现与巡检",
+      "title": "手动立即巡检",
+      "description": "管理员从管理电脑本机提交设备检查或事件复查，202 返回任务 ID；通过任务接口查询，不把受理成功当检测通过。",
+      "status": "已确定"
+    },
+    {
+      "id": "scan-9",
+      "category": "设备发现与巡检",
+      "title": "扫描负载限制",
+      "description": "一个应用进程、一个 worker、一个调度所有者；全局最多并发 6 项、每设备 3 项，同设备最多一个活动任务，最长排队 30 秒。",
+      "status": "已确定"
+    },
+    {
+      "id": "data-4",
+      "category": "后端与数据",
+      "title": "重启与备份",
+      "description": "重启保留配置、流水、事件和备注，遗留 queued/running 标为 interrupted，重建调度；每日一致性备份留 7 份，迁移前另备份并验证恢复。",
+      "status": "已确定"
+    },
+    {
+      "id": "ui-1",
+      "category": "界面与操作",
+      "title": "重新设计管理界面",
+      "description": "面向管理员日常查看，清晰直观；不沿用参考源码页面。",
+      "status": "已确定"
+    },
+    {
+      "id": "ui-2",
+      "category": "界面与操作",
+      "title": "运行总览",
+      "description": "总览从同一读取事务的快照显示设备、状态、最近观测和事件；正常率分母为启用设备，未知不计正常，无设备返回 null。",
+      "status": "已确定"
+    },
+    {
+      "id": "ui-3",
+      "category": "界面与操作",
+      "title": "设备和设备详情",
+      "description": "制作设备列表与详情，显示配置、最新观测、健康、新鲜度和历史；稳定 UUID 关联，示例不冒充真实数据。",
+      "status": "已确定"
+    },
+    {
+      "id": "ui-4",
+      "category": "界面与操作",
+      "title": "巡检、异常与历史页面",
+      "description": "按契约显示设备、任务、事件和历史，查看异常证据、排查建议、备注与恢复；读取不触发检测。",
+      "status": "已确定"
+    },
+    {
+      "id": "ui-5",
+      "category": "界面与操作",
+      "title": "状态和错误反馈",
+      "description": "区分 queued/running/completed/failed/interrupted、目标观测、健康和新鲜度；首版不提供运行任务取消接口，错误与未知不能显示正常。",
+      "status": "已确定"
+    }
+  ]
+}

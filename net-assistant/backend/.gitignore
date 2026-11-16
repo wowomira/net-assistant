@@ -1,0 +1,12 @@
+.venv/
+__pycache__/
+.pytest_cache/
+*.py[cod]
+/data/
+.env
+/reports/
+configs/*.local.json
+legacy_native/configs/
+tools/gatus/bin/
+tools/gatus/cache/
+tools/gatus/runtime/

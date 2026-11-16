@@ -1,0 +1,32 @@
+{
+  "evidence": "actual_local_http_get_not_browser_screenshot",
+  "source": "http://127.0.0.1:8000",
+  "staticAssets": [
+    "/console/assets/index-Bz2FAscK.js",
+    "/console/assets/index-mLgjynO8.css"
+  ],
+  "businessCountsBefore": {
+    "discovery_jobs": 3,
+    "discovery_probes": 3690,
+    "assets": 2,
+    "asset_discovery_links": 6,
+    "asset_audit_events": 8,
+    "scheduled_scan_runs": 1
+  },
+  "businessCountsAfter": {
+    "discovery_jobs": 3,
+    "discovery_probes": 3690,
+    "assets": 2,
+    "asset_discovery_links": 6,
+    "asset_audit_events": 8,
+    "scheduled_scan_runs": 1
+  },
+  "assets": 2,
+  "jobs": 3,
+  "latestJobId": "00000000-0000-4000-8000-000000000001",
+  "latestHostSnapshots": 2,
+  "latestProbeRecords": 1230,
+  "todayStatus": "completed",
+  "workerState": "running",
+  "scanTriggered": false
+}

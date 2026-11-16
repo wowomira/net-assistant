@@ -1,0 +1,4 @@
+# Optional mature name-discovery component, Windows / Python 3.13 verified.
+# Install in the backend virtual environment only.
+zeroconf==0.154.0
+ifaddr==0.2.0
