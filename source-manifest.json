@@ -122,7 +122,7 @@
     "net-assistant/backend/docs/任务05-06-后台服务与状态验收.md": "54c9eb311654117ee71bb4b11513ebba287399eb8e320e836a93dfdfcdd2be44",
     "net-assistant/backend/docs/任务05-06-验证输出.txt": "8186d208193b8bfbeacd02b43b4a134a01e1690c5257a463bda99d8fa0b33ad4",
     "net-assistant/backend/docs/任务05-后台服务与运行状态计划.md": "24220c620ca14fd567ae816c2832384e1c70f66a0ccfe5ea4f694731bdadfbf8",
-    "net-assistant/backend/docs/前端对接说明.md": "66351645bbc660c024aad712b9eb36010ee30d2fda3f9b9bf08506801cefa88b",
+    "net-assistant/backend/docs/前端对接说明.md": "130575404d334b6d0a4c66d405a8e22c8f4746a4438db733f918ff5ef7e518cd",
     "net-assistant/backend/docs/后台服务与调度状态-使用说明.md": "064d406971b4c30c407d2571a393720aebfb11ab90705d3f531586c4c6c2443b",
     "net-assistant/backend/docs/后端程序功能与采集数据说明.md": "8735673344147e64e8822f9c98198038cc4e0b4878e9d83c3b50eb71e1b2086c",
     "net-assistant/backend/docs/稳定资产台账-使用与接口.md": "ff8663a1df03a5982ab476c6249fc1147dc301d94d7560b608856aa1e5132d78",
@@ -240,12 +240,13 @@
     "tests/test_data_seed.py": "396afda62717a76a3709e2c05bdf1089d1fc2e8fc62fa17250aa875cf824801a",
     "tests/test_data_seed_http.py": "e526ff22deac875a31892c5646cf18f4628f105b5f29149ec86bc460d34ec4f7",
     "tests/test_delivery_source.py": "28488c816c2ab8dc5bb65426831aa3a570d80546a08159ff7b78f9a42f5700ed",
+    "tests/test_frontend_handoff.py": "f8cb11278abbbe867eb8a22455c90a4a495bae3da35009dfeb59101444ff39d7",
     "tests/test_portable_runtime.py": "4219cd85d754fe7e970a0c44b3a84266cc71477113e669ed805b6b1eb86978db",
     "tests/test_workspace.py": "4bd4f5c8793b9fb7f02e38ad58a74aab5e2de5f37df985a8d7310eeaef1756aa",
     "tests/test_workspace_http.py": "d19a4fe7936a75623810484c93cf095ea616b8304b926ae4057d5c07fecf6222"
   },
   "hash_normalization": "CRLF converted to LF for text files without NUL, matching Git checkout policy",
-  "complete_current_source_files": 241,
+  "complete_current_source_files": 242,
   "documentation_redactions_and_encoding_normalization": [
     "net-assistant/README.md",
     "net-assistant/backend/README.md",
