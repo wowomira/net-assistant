@@ -10,10 +10,13 @@ import subprocess
 import tempfile
 import time
 import unittest
+import sys
 import urllib.error
 import urllib.request
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "scripts"))
+from workspace import isolated_python_command
 PYTHON = ROOT / ".runtime" / ("venv/Scripts/python.exe" if os.name == "nt" else "venv/bin/python")
 if (ROOT / ".runtime/python/python.exe").is_file():
     PYTHON = ROOT / ".runtime/python/python.exe"
@@ -44,7 +47,7 @@ class RealHttpWorkspaceTests(unittest.TestCase):
                 "AuthStore(workspace.layout()['database']).create_user("
                 "'isolated-smoke',sys.stdin.read(),'admin')"
             )
-            seeded = subprocess.run([str(PYTHON), "-c", select_checkout + seed], input=password,
+            seeded = subprocess.run(isolated_python_command(PYTHON, select_checkout + seed), input=password,
                                     cwd=root, env=environment, text=True, encoding="utf-8",
                                     capture_output=True)
             self.assertEqual(seeded.returncode, 0, seeded.stdout + seeded.stderr)
@@ -75,7 +78,7 @@ class RealHttpWorkspaceTests(unittest.TestCase):
 
             with (root / ".runtime/http-smoke.log").open("wb") as log:
                 process = subprocess.Popen(
-                    [str(PYTHON), "-u", "-c", select_checkout + launch], cwd=root, env=environment,
+                    isolated_python_command(PYTHON, select_checkout + launch), cwd=root, env=environment,
                     stdin=subprocess.DEVNULL, stdout=log, stderr=log,
                     creationflags=0x08000000 if os.name == "nt" else 0,
                 )

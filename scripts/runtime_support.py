@@ -106,7 +106,8 @@ def runtime_environment(root=ROOT, source=None):
     root = Path(root).resolve()
     env = dict(os.environ if source is None else source)
     for key in list(env):
-        if key.upper().startswith(("INSPECT_", "NET_ASSISTANT_")) or key.upper() in (
+        if key.upper().startswith("INSPECT_") or key.upper() in (
+                "NET_ASSISTANT_PORTABLE", "NET_ASSISTANT_GATUS", "NET_ASSISTANT_SSH", "NET_ASSISTANT_ROOT",
                 "PYTHONPATH", "PYTHONHOME", "PLAYWRIGHT_BROWSERS_PATH", "NODE_PATH"):
             del env[key]
     tools = root / ".runtime/tools"

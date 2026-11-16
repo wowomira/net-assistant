@@ -4,16 +4,45 @@ from contextlib import closing
 import json
 from pathlib import Path
 import sqlite3
+import os
+import sys
+from unittest.mock import patch
 import tempfile
 import unittest
 
 SCRIPT = Path(__file__).resolve().parents[1] / "scripts/workspace.py"
+sys.path.insert(0, str(SCRIPT.parent))
 spec = importlib.util.spec_from_file_location("workspace", SCRIPT)
 workspace = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(workspace)
 
 
 class WorkspaceTests(unittest.TestCase):
+    def test_owned_http_process_uses_base_python_not_windows_venv_redirector(self):
+        metadata = json.dumps({"base": "C:/Python/python.exe",
+                               "packages": "C:/checkout/.runtime/venv/Lib/site-packages"})
+        with patch.object(workspace.subprocess, "check_output", return_value=metadata):
+            command = workspace.isolated_python_command("C:/checkout/.runtime/venv/Scripts/python.exe",
+                                                        "print('owned-test')")
+        self.assertEqual(command[:4], ["C:/Python/python.exe", "-I", "-S", "-c"])
+        self.assertIn("site.addsitedir", command[4])
+        self.assertIn("C:/checkout/.runtime/venv/Lib/site-packages", command[4])
+
+    def test_direct_interpreter_entry_activates_sanitized_environment_before_start(self):
+        import runtime_manager
+        expected = {**os.environ, "NET_ASSISTANT_PORTABLE": "1",
+                    "NET_ASSISTANT_GATUS": "project-local-fixture"}
+        def inspect_start(port):
+            self.assertEqual(port, 8001)
+            self.assertEqual(os.environ.get("NET_ASSISTANT_PORTABLE"), "1")
+            self.assertEqual(os.environ.get("NET_ASSISTANT_GATUS"), "project-local-fixture")
+        with patch.dict(os.environ, {}, clear=True), \
+                patch.object(sys, "argv", ["workspace.py", "start"]), \
+                patch.object(workspace, "require_runtime", return_value=Path(sys.executable)), \
+                patch.object(workspace, "server_environment", return_value=expected), \
+                patch.object(runtime_manager, "start", side_effect=inspect_start):
+            workspace.main()
+
     def test_paths_follow_checkout_not_current_working_directory(self):
         root = (Path(tempfile.gettempdir()) / "协作 空格目录" / "checkout").resolve()
         paths = workspace.layout(root)

@@ -137,6 +137,18 @@ def run(arguments, *, cwd=ROOT, env=None):
     subprocess.run([str(item) for item in arguments], cwd=cwd, env=env, check=True)
 
 
+def isolated_python_command(python, code):
+    """One owned OS process, not Windows venv's redirector plus an orphan child."""
+    metadata = json.loads(subprocess.check_output(
+        [str(python), "-c", "import sys,sysconfig,json;print(json.dumps("
+         "{'base':sys._base_executable,'packages':sysconfig.get_paths()['purelib']}))"],
+        text=True, encoding="utf-8", timeout=30))
+    prefix = ("import sys,site;"
+              "sys.stdout.reconfigure(encoding='utf-8');sys.stderr.reconfigure(encoding='utf-8');"
+              f"site.addsitedir({metadata['packages']!r});")
+    return [metadata["base"], "-I", "-S", "-c", prefix + code]
+
+
 def npm_path():
     portable = ROOT / ".runtime/tools/node/npm.cmd"
     if (ROOT / ".runtime/portable-ready.json").is_file():
@@ -309,6 +321,10 @@ def main():
     if Path(sys.executable).resolve() != python.resolve():
         run([python, Path(__file__).resolve(), *sys.argv[1:]], env=environment)
         return
+    # bootstrap.ps1 invokes the embedded interpreter directly, so there may be
+    # no re-exec above. Workers in THIS process need the same local-tool policy.
+    os.environ.clear()
+    os.environ.update(environment)
     if args.command == "import-nmap":
         from runtime_manager import import_nmap
         import_nmap(args.source)

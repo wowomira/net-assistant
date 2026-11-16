@@ -19,7 +19,7 @@ import urllib.request
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from data_seed import BUSINESS_TABLES, manifest_path, now, readonly, table_digest, validate_seed
-from workspace import ROOT, layout
+from workspace import ROOT, layout, isolated_python_command
 
 
 def require(condition, message):
@@ -84,7 +84,7 @@ def verify(seed_path):
             "'seed-http-verification',sys.stdin.read(),'admin')"
         )
         result = subprocess.run(
-            [str(paths["python"]), "-c", select_checkout + create_account], input=password,
+            isolated_python_command(paths["python"], select_checkout + create_account), input=password,
             cwd=root, env=environment, text=True, encoding="utf-8", capture_output=True,
             timeout=60,
         )
@@ -148,7 +148,7 @@ def verify(seed_path):
         )
         with (root / "http.log").open("wb") as log:
             process = subprocess.Popen(
-                [str(paths["python"]), "-u", "-c", select_checkout + launch], cwd=root, env=environment,
+                isolated_python_command(paths["python"], select_checkout + launch), cwd=root, env=environment,
                 stdin=subprocess.DEVNULL, stdout=log, stderr=log,
                 creationflags=0x08000000 if os.name == "nt" else 0,
             )

@@ -69,10 +69,12 @@ class PortableRuntimeTests(unittest.TestCase):
             environment = support.runtime_environment(root, {
                 "PATH": "E:/author-tools", "PLAYWRIGHT_BROWSERS_PATH": "C:/private-browser",
                 "INSPECT_DB": "C:/private.sqlite", "NET_ASSISTANT_GATUS": "E:/gatus.exe",
+                "NET_ASSISTANT_SWITCH_AUTH": "test-credential-never-printed",
                 "SystemRoot": "C:/Windows",
             })
             self.assertNotIn("E:/author-tools", environment["PATH"])
             self.assertNotIn("INSPECT_DB", environment)
+            self.assertEqual(environment["NET_ASSISTANT_SWITCH_AUTH"], "test-credential-never-printed")
             self.assertEqual(environment["NET_ASSISTANT_GATUS"],
                              str(root.resolve() / ".runtime/tools/gatus/gatus.exe"))
             self.assertEqual(environment["PLAYWRIGHT_BROWSERS_PATH"],
