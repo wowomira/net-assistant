@@ -225,7 +225,7 @@ class DataSeedTests(unittest.TestCase):
 
         def fail_on_runtime(connection, table):
             path = Path(connection.execute("PRAGMA database_list").fetchone()[2])
-            if path == target:
+            if path.resolve() == target.resolve():
                 raise ValueError("injected runtime verification failure")
             return real_digest(connection, table)
 

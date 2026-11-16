@@ -15,7 +15,7 @@ spec.loader.exec_module(workspace)
 
 class WorkspaceTests(unittest.TestCase):
     def test_paths_follow_checkout_not_current_working_directory(self):
-        root = Path(tempfile.gettempdir()) / "协作 空格目录" / "checkout"
+        root = (Path(tempfile.gettempdir()) / "协作 空格目录" / "checkout").resolve()
         paths = workspace.layout(root)
         self.assertEqual(paths["database"], root / ".runtime/data/development.sqlite")
         self.assertEqual(paths["frontend_dist"], root / ".runtime/frontend/dist")

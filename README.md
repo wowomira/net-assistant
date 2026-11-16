@@ -45,8 +45,8 @@ Npcap 仍需本人从官方渠道安装、同意许可，某些原始探测需�
 
 ### 另一条路径：系统 Python/Node 的开发者安装
 
-支持基线：**Windows x64 / Python 3.13.x / Node.js 24.x**。
-先自行安装 Python 与 Node.js；本轮实测 Python 3.13.7、Node.js 24.11.0。
+支持基线：**Windows x64 / Python 3.13.7 / Node.js 24.11.0（npm 11.6.1）**。
+先自行安装这组固定版本；不能仅凭同属 Node 24 就假定新 npm 对锁文件的行为相同。
 在本 README 所在的仓库根目录运行：
 
 ```powershell

@@ -168,8 +168,8 @@ def setup(index_url=None, wheelhouse=None):
     npm = npm_path()
     node = shutil.which("node")
     version = subprocess.check_output([node, "--version"], text=True).strip() if node else ""
-    if not version.startswith("v24."):
-        raise ValueError("Verified Node.js major is 24.x; install Node.js 24.x first.")
+    if version != "v24.11.0":
+        raise ValueError("Pinned Node.js is 24.11.0 (npm 11.6.1). Use this version or bootstrap.ps1.")
     paths = layout()
     if not paths["python"].is_file():
         venv.EnvBuilder(with_pip=True).create(paths["runtime"] / "venv")
