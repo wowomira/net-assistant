@@ -262,20 +262,33 @@ async def test_http_capture_never_sends_a_cookie_from_an_earlier_asset():
 
 @pytest.mark.anyio
 async def test_partial_scan_preserves_early_name_and_service_evidence(tmp_path):
+    tail_started = asyncio.Event()
+    tail_cancelled = asyncio.Event()
+
     class SlowTail(InventoryProbes):
         async def icmp(self, address):
             return ProbeResult(address, "icmp", "reply")
 
         async def tcp(self, address, port):
+            if address.endswith(".10"):
+                # Reproduce routine scheduling/SQLite overhead on hosted Windows.
+                await asyncio.sleep(0.2)
             if address.endswith(".11"):
-                await asyncio.sleep(1)
+                tail_started.set()
+                try:
+                    # Only the scan deadline may release the unfinished tail.
+                    await asyncio.Event().wait()
+                finally:
+                    tail_cancelled.set()
             return ProbeResult(address, "tcp", "open", port=port)
 
     settings = ScanSettings(name="partial-evidence", targets=["10.5.8.10-10.5.8.11"],
-                            ports=[22], banner_ports=[22], concurrency=1, budget_seconds=0.15)
+                            ports=[22], banner_ports=[22], concurrency=1, budget_seconds=5)
     db = initialize_database(tmp_path / "isolated.sqlite")
     job = await run_discovery(settings, db, SlowTail())
     assert db.get_job(job)["state"] == "partial"
+    assert db.get_job(job)["error_code"] == "budget_exceeded"
+    assert tail_started.is_set() and tail_cancelled.is_set()
     host = next(host for host in db.list_hosts(job)["items"] if host["address"].endswith(".10"))
     assert host["hostname"] == "inventory-host.test"
     assert host["services"][0]["protocol"] == "ssh"
