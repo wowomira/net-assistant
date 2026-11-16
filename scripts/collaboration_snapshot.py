@@ -92,9 +92,9 @@ def build(output, root=ROOT):
                     # Normalize documentation only, never program code or schemas.
                     text = data.decode("utf-16" if data.startswith((b"\xff\xfe", b"\xfe\xff"))
                                        else "gb18030", errors="replace")
-                sanitized = sanitize_document(text)
+                sanitized = sanitize_document(text).replace("\r\n", "\n").replace("\r", "\n")
                 if sanitized != text or data != sanitized.encode("utf-8"):
-                    destination.write_text(sanitized, encoding="utf-8")
+                    destination.write_text(sanitized, encoding="utf-8", newline="\n")
                     transformed.append(name)
         inventory = {name: digest(output / name) for name in sources}
         manifest = {

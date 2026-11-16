@@ -1,141 +1,141 @@
-Final verification: 2026-11-15T12:46:21.860690+08:00
-
-$ C:\Program Files\nodejs\node.EXE C:\Program Files\nodejs\node_modules\npm\bin\npm-cli.js test -- --reporter=dot
-
-> net-assistant-console@0.1.0 test
-> vitest run --reporter=dot
-
-
- RUN  v4.1.12 <checkout-or-user-tool-path>
-
-····················
-
- Test Files  3 passed (3)
-      Tests  20 passed (20)
-   Start at  12:46:22
-   Duration  2.57s (transform 233ms, setup 0ms, import 649ms, tests 723ms, environment 3.61s)
-
-
-EXIT=0
-
-$ C:\Program Files\nodejs\node.EXE C:\Program Files\nodejs\node_modules\npm\bin\npm-cli.js run test:live
-
-> net-assistant-console@0.1.0 test:live
-> vitest run --config vite.live.config.ts
-
-
- RUN  v4.1.12 <checkout-or-user-tool-path>
-
-
- Test Files  1 passed (1)
-      Tests  1 passed (1)
-   Start at  12:46:25
-   Duration  2.01s (transform 80ms, setup 0ms, import 357ms, tests 400ms, environment 1.08s)
-
-
-EXIT=0
-
-$ C:\Program Files\nodejs\node.EXE C:\Program Files\nodejs\node_modules\npm\bin\npm-cli.js run build
-
-> net-assistant-console@0.1.0 build
-> npm run typecheck && vite build
-
-
-> net-assistant-console@0.1.0 typecheck
-> tsc --noEmit
-
-vite v8.3.8 building client environment for production...
-transforming...
-✓ 22 modules transformed.
-rendering chunks...
-computing gzip size...
-dist/index.html                   0.62 kB │ gzip:  0.43 kB
-dist/assets/index-mLgjynO8.css    5.25 kB │ gzip:  1.83 kB
-dist/assets/index-Bz2FAscK.js   214.57 kB │ gzip: 67.86 kB
-
-✓ built in 99ms
-
-EXIT=0
-
-$ <checkout-or-user-tool-path>
-........................................................................ [ 59%]
-.................................................                        [100%]
-121 passed in 23.24s
-
-EXIT=0
-
-$ <checkout-or-user-tool-path>
-No broken requirements found.
-
-EXIT=0
-
-$ <checkout-or-user-tool-path>
-
-EXIT=0
-
-$ <checkout-or-user-tool-path>
-{
-  "evidence": "actual_local_http_get_not_browser_screenshot",
-  "source": "http://127.0.0.1:8000",
-  "staticAssets": [
-    "/console/assets/index-Bz2FAscK.js",
-    "/console/assets/index-mLgjynO8.css"
-  ],
-  "businessCountsBefore": {
-    "discovery_jobs": 3,
-    "discovery_probes": 3690,
-    "assets": 2,
-    "asset_discovery_links": 6,
-    "asset_audit_events": 8,
-    "scheduled_scan_runs": 1
-  },
-  "businessCountsAfter": {
-    "discovery_jobs": 3,
-    "discovery_probes": 3690,
-    "assets": 2,
-    "asset_discovery_links": 6,
-    "asset_audit_events": 8,
-    "scheduled_scan_runs": 1
-  },
-  "assets": 2,
-  "jobs": 3,
-  "latestJobId": "00000000-0000-4000-8000-000000000001",
-  "latestHostSnapshots": 2,
-  "latestProbeRecords": 1230,
-  "todayStatus": "completed",
-  "workerState": "running",
-  "scanTriggered": false
-}
-
-EXIT=0
-
-$ <checkout-or-user-tool-path>
-OpenAPI 0.5.0 unchanged
-
-EXIT=0
-
-$ C:\Program Files\nodejs\node.EXE C:\Program Files\nodejs\node_modules\npm\bin\npm-cli.js audit --registry=https://registry.npmjs.org --json --fetch-retries=0 --fetch-timeout=20000
-{
-  "auditReportVersion": 2,
-  "vulnerabilities": {},
-  "metadata": {
-    "vulnerabilities": {
-      "info": 0,
-      "low": 0,
-      "moderate": 0,
-      "high": 0,
-      "critical": 0,
-      "total": 0
-    },
-    "dependencies": {
-      "prod": 2,
-      "dev": 189,
-      "optional": 58,
-      "peer": 11,
-      "peerOptional": 0,
-      "total": 192
-    }
-  }
-}
-
-EXIT=0
+Final verification: 2026-11-15T12:46:21.860690+08:00
+
+$ C:\Program Files\nodejs\node.EXE C:\Program Files\nodejs\node_modules\npm\bin\npm-cli.js test -- --reporter=dot
+
+> net-assistant-console@0.1.0 test
+> vitest run --reporter=dot
+
+
+ RUN  v4.1.12 <checkout-or-user-tool-path>
+
+····················
+
+ Test Files  3 passed (3)
+      Tests  20 passed (20)
+   Start at  12:46:22
+   Duration  2.57s (transform 233ms, setup 0ms, import 649ms, tests 723ms, environment 3.61s)
+
+
+EXIT=0
+
+$ C:\Program Files\nodejs\node.EXE C:\Program Files\nodejs\node_modules\npm\bin\npm-cli.js run test:live
+
+> net-assistant-console@0.1.0 test:live
+> vitest run --config vite.live.config.ts
+
+
+ RUN  v4.1.12 <checkout-or-user-tool-path>
+
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  12:46:25
+   Duration  2.01s (transform 80ms, setup 0ms, import 357ms, tests 400ms, environment 1.08s)
+
+
+EXIT=0
+
+$ C:\Program Files\nodejs\node.EXE C:\Program Files\nodejs\node_modules\npm\bin\npm-cli.js run build
+
+> net-assistant-console@0.1.0 build
+> npm run typecheck && vite build
+
+
+> net-assistant-console@0.1.0 typecheck
+> tsc --noEmit
+
+vite v8.3.8 building client environment for production...
+transforming...
+✓ 22 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                   0.62 kB │ gzip:  0.43 kB
+dist/assets/index-mLgjynO8.css    5.25 kB │ gzip:  1.83 kB
+dist/assets/index-Bz2FAscK.js   214.57 kB │ gzip: 67.86 kB
+
+✓ built in 99ms
+
+EXIT=0
+
+$ <checkout-or-user-tool-path>
+........................................................................ [ 59%]
+.................................................                        [100%]
+121 passed in 23.24s
+
+EXIT=0
+
+$ <checkout-or-user-tool-path>
+No broken requirements found.
+
+EXIT=0
+
+$ <checkout-or-user-tool-path>
+
+EXIT=0
+
+$ <checkout-or-user-tool-path>
+{
+  "evidence": "actual_local_http_get_not_browser_screenshot",
+  "source": "http://127.0.0.1:8000",
+  "staticAssets": [
+    "/console/assets/index-Bz2FAscK.js",
+    "/console/assets/index-mLgjynO8.css"
+  ],
+  "businessCountsBefore": {
+    "discovery_jobs": 3,
+    "discovery_probes": 3690,
+    "assets": 2,
+    "asset_discovery_links": 6,
+    "asset_audit_events": 8,
+    "scheduled_scan_runs": 1
+  },
+  "businessCountsAfter": {
+    "discovery_jobs": 3,
+    "discovery_probes": 3690,
+    "assets": 2,
+    "asset_discovery_links": 6,
+    "asset_audit_events": 8,
+    "scheduled_scan_runs": 1
+  },
+  "assets": 2,
+  "jobs": 3,
+  "latestJobId": "00000000-0000-4000-8000-000000000001",
+  "latestHostSnapshots": 2,
+  "latestProbeRecords": 1230,
+  "todayStatus": "completed",
+  "workerState": "running",
+  "scanTriggered": false
+}
+
+EXIT=0
+
+$ <checkout-or-user-tool-path>
+OpenAPI 0.5.0 unchanged
+
+EXIT=0
+
+$ C:\Program Files\nodejs\node.EXE C:\Program Files\nodejs\node_modules\npm\bin\npm-cli.js audit --registry=https://registry.npmjs.org --json --fetch-retries=0 --fetch-timeout=20000
+{
+  "auditReportVersion": 2,
+  "vulnerabilities": {},
+  "metadata": {
+    "vulnerabilities": {
+      "info": 0,
+      "low": 0,
+      "moderate": 0,
+      "high": 0,
+      "critical": 0,
+      "total": 0
+    },
+    "dependencies": {
+      "prod": 2,
+      "dev": 189,
+      "optional": 58,
+      "peer": 11,
+      "peerOptional": 0,
+      "total": 192
+    }
+  }
+}
+
+EXIT=0

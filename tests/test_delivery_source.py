@@ -20,8 +20,8 @@ class DeliverySourceTests(unittest.TestCase):
             code = b'address = "10.9.0.10"\r\n'
             (root / "app/untracked.py").write_bytes(code)
             (root / "frontend/src/data/model.ts").write_bytes(b"export const model = 1;\n")
-            (root / "docs/history.md").write_text(
-                "10.9.0.10 AA:BB:CC:DD:EE:FF DESKTOP-EXAMPLE", encoding="utf-8")
+            (root / "docs/history.md").write_bytes(
+                b"10.9.0.10 AA:BB:CC:DD:EE:FF DESKTOP-EXAMPLE\r\nsecond line\r\n")
             names = b"app/untracked.py\0docs/history.md\0frontend/src/data/model.ts\0already-deleted.py\0"
             with patch.object(snapshot.subprocess, "check_output", return_value=names):
                 manifest = snapshot.build(target, root)
@@ -29,6 +29,7 @@ class DeliverySourceTests(unittest.TestCase):
             self.assertEqual((target / "app/untracked.py").read_bytes(), code)
             self.assertTrue((target / "frontend/src/data/model.ts").is_file())
             history = (target / "docs/history.md").read_text("utf-8")
+            self.assertNotIn(b"\r\r\n", (target / "docs/history.md").read_bytes())
             self.assertNotIn("10.9.0.10", history)
             self.assertNotIn("AA:BB:CC:DD:EE:FF", history)
             snapshot.verify(target)
