@@ -45,7 +45,7 @@
     "accounts, credentials and personal configuration"
   ],
   "release": {
-    "repository": "wowomira/net-assistant-collaboration",
+    "repository": "wowomira/net-assistant",
     "tag": "v0.10.0-collaboration.1",
     "asset": "runtime-resources-win-x64.zip",
     "sha256": "f3590323616129d332852915f48304b586cbce15bd324a1e5932dcca0c3601a8",

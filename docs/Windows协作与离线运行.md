@@ -15,8 +15,8 @@ Windows 本机网络采集、交换机 SNMP、mDNS、网站静态截图、API �
 
 | 交付 | 包含 | 不包含 |
 |---|---|---|
-| Git 私人仓库 | 全部当前源码、7个迁移文件、前端锁文件、后端固定依赖、配置模板、契约、测试、说明、启动/快照/数据种子工具 | 原工作库、账号、会话、密钥、本机配置、旧 Git 历史、生成缓存 |
-| 同仓库私人 Release 资源包 | Python 3.13.7 x64、Node 24.11.0/npm、wheels、npm缓存、Gatus v5.38.0及源代码/许可、OpenSSH 9.5.0.0p1-Beta、Playwright 1.65.2对应 Chromium headless shell 1255、Swagger 5.30.2、第三方许可和校验清单 | Nmap/Npcap、真实历史数据库、运行配置与账号 |
+| Git 公开仓库 | 全部当前源码、7个迁移文件、前端锁文件、后端固定依赖、配置模板、契约、测试、说明、启动/快照/数据种子工具 | 原工作库、账号、会话、密钥、本机配置、旧 Git 历史、生成缓存 |
+| 同仓库公开 Release 资源包 | Python 3.13.7 x64、Node 24.11.0/npm、wheels、npm缓存、Gatus v5.38.0及源代码/许可、OpenSSH 9.5.0.0p1-Beta、Playwright 1.65.2对应 Chromium headless shell 1255、Swagger 5.30.2、第三方许可和校验清单 | Nmap/Npcap、真实历史数据库、运行配置与账号 |
 | 本地私人历史包 | 2026-11-16固定历史数据种子及其清单 | 账号、会话、终端操作、自动扫描授权，不上传 GitHub |
 
 OpenSSH 选择与原系统客户端相同的 9.5 系列，而不是未经实测升级到新 Preview；
@@ -27,20 +27,20 @@ OpenSSH 选择与原系统客户端相同的 9.5 系列，而不是未经实测�
 
 要求：Windows 10/11 x64、64位 Windows PowerShell、足够磁盘空间（建议预留4GB以上）。
 不要求 Python、Node、Go 已全局安装。
-先由仓库所有者邀请你的 GitHub 账号访问私人仓库；没有擅自邀请任何人。
+仓库与非敏感运行资源公开可读，无需邀请即可克隆和下载；写入权限仍由管理员按需授权。
 
 在你选择的目录克隆：
 
 ```powershell
-git clone https://github.com/wowomira/net-assistant-collaboration.git
-cd net-assistant-collaboration
+git clone https://github.com/wowomira/net-assistant.git
+cd net-assistant
 ```
 
 在仓库网页 Release 下载 `v0.10.0-collaboration.1` 的 `runtime-resources-win-x64.zip`。
 安装并登录 GitHub CLI 的用户也可以：
 
 ```powershell
-gh release download v0.10.0-collaboration.1 --repo wowomira/net-assistant-collaboration --pattern runtime-resources-win-x64.zip
+gh release download v0.10.0-collaboration.1 --repo wowomira/net-assistant --pattern runtime-resources-win-x64.zip
 $expected = (Get-Content -LiteralPath .\runtime.lock.json -Raw | ConvertFrom-Json).release.sha256
 if ((Get-FileHash -LiteralPath .\runtime-resources-win-x64.zip -Algorithm SHA256).Hash.ToLowerInvariant() -ne $expected) {
     throw '资源包校验失败，禁止继续'
@@ -175,7 +175,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\bootstrap.ps1 test --l
 ## 第三方与隐私
 
 资源清单记录 SHA256 和来源；保留各第三方许可证、Gatus 源码及依赖许可文本。
-没有替自有源码擅自选开源许可证；私人仓库不等于可以不遵守第三方许可。
+自有源码的开源许可证尚未选定；仓库公开不改变各第三方组件的许可要求。
 Nmap/Npcap 明确排除，不用用户 UAC 同意来代替再分发许可。
 旧文档中个人安装路径和真实内网地址在发布快照里脱敏，代码逐字节核对，原件在本地备份保留。
-仓库成员通过私有 Release 取得非敏感运行资源；真实历史和凭据不上传。
+非敏感运行资源通过公开 Release 提供；真实历史、账号、凭据及本地私人交付包不上传。
