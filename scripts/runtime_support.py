@@ -78,7 +78,9 @@ def extract_zip(archive, target):
 def verify_resources(directory, expected_manifest=None):
     directory = Path(directory).absolute()
     manifest = directory / "manifest.json"
-    if directory.resolve() != directory or manifest.resolve() != manifest:
+    # Windows may spell a real directory using its 8.3 alias. Check the links
+    # themselves so a different spelling of an ordinary directory is accepted.
+    if any(part.is_symlink() or part.is_junction() for part in (manifest, *manifest.parents)):
         raise ValueError("Redirected resource bundle or manifest.")
     if expected_manifest:
         check_hash(manifest, expected_manifest)
