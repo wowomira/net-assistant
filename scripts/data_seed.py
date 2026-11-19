@@ -2,7 +2,7 @@
 from collections import Counter
 from contextlib import closing, contextmanager
 from datetime import datetime, timezone
-from hashlib import sha256
+from hashlib import file_digest, sha256
 import json
 import os
 from pathlib import Path
@@ -59,7 +59,7 @@ def now():
 
 def file_hash(path):
     with Path(path).open("rb") as stream:
-        return sha256(stream.read()).hexdigest()
+        return file_digest(stream, "sha256").hexdigest()
 
 
 def quote(name):
@@ -248,8 +248,7 @@ def screenshots(connection, source_root, destination_root):
         else:
             entry["file"] = name
             original = source_root / name
-            if (not original.is_file() or original.is_symlink()
-                    or original.resolve().parent != source_root.resolve()):
+            if original.resolve() != original or not original.is_file():
                 entry["reason"] = "artifact_not_available"
             else:
                 destination_root.mkdir(parents=True, exist_ok=True)
@@ -355,7 +354,7 @@ def validate_seed(path):
             if not SCREENSHOT_NAME.fullmatch(name):
                 raise ValueError("Unsafe screenshot name.")
             artifact = root / name
-            if (artifact.is_symlink() or artifact.resolve().parent != root.resolve()
+            if (artifact.resolve() != artifact or not artifact.is_file()
                     or file_hash(artifact) != entry["sha256"]):
                 raise ValueError("Screenshot checksum/path mismatch.")
     except (KeyError, TypeError, sqlite3.Error, OSError, json.JSONDecodeError):

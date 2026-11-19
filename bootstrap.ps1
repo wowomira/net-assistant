@@ -45,7 +45,7 @@ if (![Environment]::Is64BitOperatingSystem -or ![Environment]::Is64BitProcess) {
 if ($Command -eq 'setup') {
     New-Item -ItemType Directory -Path $Runtime -Force | Out-Null
     if (!(Test-Path -LiteralPath (Join-Path $Resources 'manifest.json'))) {
-        throw 'Download runtime-resources-win-x64.zip from this private repository Release, verify its SHA256 against runtime.lock.json, and extract .runtime/resources into the checkout. See docs/Windows协作与离线运行.md. No tools are silently omitted.'
+        throw 'Download the repository Release asset named in runtime.lock.json, verify its SHA256, and extract .runtime/resources into this checkout. See README.md.'
     }
     Assert-Hash (Join-Path $Resources 'manifest.json') $Lock.resource_manifest_sha256
     Assert-Hash (Join-Path $Resources 'python.zip') $Lock.artifacts.'python.zip'.sha256

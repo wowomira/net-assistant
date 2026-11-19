@@ -2,8 +2,10 @@
 from contextlib import closing
 import importlib.util
 import json
+import os
 from pathlib import Path
 import sqlite3
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -119,16 +121,19 @@ class DataSeedTests(unittest.TestCase):
             self.assertEqual(conn.execute("SELECT error_code FROM discovery_jobs").fetchone()[0],
                              "committed-in-wal")
 
-    def test_captured_screenshots_are_copied_and_missing_files_are_reported(self):
+    def record_screenshot_probes(self, names):
         from app.discovery.types import ProbeResult
         from app.discovery.store import Database
-        names = ["a" * 32 + ".png", "b" * 32 + ".png"]
         db = Database(self.source)
         db.record_probes(self.ids[0], [
             ProbeResult("10.9.0.10", "screenshot", "captured", evidence={"file": name})
             for name in names
         ])
         db.engine.dispose()
+
+    def test_captured_screenshots_are_copied_and_missing_files_are_reported(self):
+        names = ["a" * 32 + ".png", "b" * 32 + ".png"]
+        self.record_screenshot_probes(names)
         screenshots = self.source.parent / "artifacts/screenshots"
         screenshots.mkdir(parents=True)
         (screenshots / names[0]).write_bytes(b"\x89PNG\r\n\x1a\nfixture")
@@ -140,6 +145,30 @@ class DataSeedTests(unittest.TestCase):
         target = self.root / "run/development.sqlite"
         seed.import_seed(self.output, target)
         self.assertTrue((target.parent / "artifacts/screenshots" / names[0]).is_file())
+
+    def test_redirected_artifact_directory_is_excluded_on_export_and_refused_on_import(self):
+        name = "a" * 32 + ".png"
+        self.record_screenshot_probes([name])
+        screenshots = self.source.parent / "artifacts/screenshots"
+        screenshots.mkdir(parents=True)
+        (screenshots / name).write_bytes(b"example image")
+        self.build()
+        bundle_artifacts = self.output.parent / "artifacts"
+        moved = self.root / "relocated artifacts"
+        bundle_artifacts.rename(moved)
+        if os.name == "nt":
+            subprocess.run(["cmd", "/d", "/c", "mklink", "/J", bundle_artifacts, moved],
+                           check=True, capture_output=True)
+        else:
+            bundle_artifacts.symlink_to(moved, target_is_directory=True)
+        target = self.root / "run/development.sqlite"
+        with self.assertRaisesRegex(ValueError, "Screenshot"):
+            seed.import_seed(self.output, target)
+        self.assertFalse(target.exists())
+        exported = self.root / "reexport/history.sqlite"
+        entry = seed.build_seed(self.output, exported)["screenshots"][0]
+        self.assertEqual(entry["reason"], "artifact_not_available")
+        self.assertFalse((exported.parent / "artifacts").exists())
 
     def test_build_failure_leaves_no_published_bundle_and_does_not_replace_existing_seed(self):
         self.build()

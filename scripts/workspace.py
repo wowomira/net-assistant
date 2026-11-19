@@ -113,19 +113,22 @@ def sync_frontend(root=ROOT):
     paths = layout(root)
     source = paths["root"] / "net-assistant/frontend"
     target = paths["frontend"]
+    files = ("package.json", "package-lock.json", "index.html", "tsconfig.json",
+             "vite.config.ts", "vite.live.config.ts")
+    directories = ("src", "tests-live")
+    # Check every destination before creating directories or copying any files.
+    for name in (*files, *directories):
+        destination = target / name
+        if (destination.resolve() != destination
+                or (destination.is_file() and destination.stat().st_nlink > 1)):
+            raise ValueError("Refusing to sync a redirected frontend runtime path.")
     target.mkdir(parents=True, exist_ok=True)
     # Explicit allowlist: no .env, local configuration, old dist, or node_modules.
-    for name in ("package.json", "package-lock.json", "index.html", "tsconfig.json",
-                 "vite.config.ts", "vite.live.config.ts"):
+    for name in files:
         if (source / name).is_file():
             shutil.copy2(source / name, target / name)
-    for name in ("src", "tests-live"):
+    for name in directories:
         destination = target / name
-        # Only replace these two generated source copies. Resolve and verify before
-        # recursive removal; reject junction/symlink redirection outside this runtime.
-        expected = paths["root"] / ".runtime/frontend" / name
-        if destination.resolve() != expected:
-            raise ValueError("Refusing to clean a redirected frontend runtime path.")
         if destination.is_dir():
             shutil.rmtree(destination)
         if (source / name).is_dir():

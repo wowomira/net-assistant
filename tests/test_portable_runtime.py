@@ -4,6 +4,7 @@ import io
 import json
 import os
 from pathlib import Path
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -60,6 +61,46 @@ class PortableRuntimeTests(unittest.TestCase):
             support.verify_resources(root)
             (root / "a.whl").write_bytes(b"tampered")
             with self.assertRaisesRegex(ValueError, "checksum"):
+                support.verify_resources(root)
+
+    def test_resource_inventory_rejects_unlisted_and_missing_files(self):
+        support = self.support()
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            wheels = root / "wheels"
+            wheels.mkdir()
+            pinned = wheels / "pinned.whl"
+            pinned.write_bytes(b"wheel")
+            manifest = {"files": {"wheels/pinned.whl": support.sha256(pinned)}}
+            (root / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+            extra = wheels / "other.whl"
+            extra.write_bytes(b"unlisted")
+            with self.assertRaisesRegex(ValueError, "Unlisted"):
+                support.verify_resources(root)
+            extra.unlink()
+            self.assertEqual(support.verify_resources(root), manifest)
+            pinned.unlink()
+            with self.assertRaisesRegex(ValueError, "missing"):
+                support.verify_resources(root)
+
+    def test_resource_inventory_rejects_linked_tool_directory_even_if_content_matches(self):
+        support = self.support()
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory) / "resources"
+            root.mkdir()
+            external = Path(directory) / "external"
+            external.mkdir()
+            tool = external / "file"
+            tool.write_bytes(b"fixture")
+            manifest = {"files": {"tools/file": support.sha256(tool)}}
+            (root / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+            linked = root / "tools"
+            if os.name == "nt":
+                subprocess.run(["cmd", "/d", "/c", "mklink", "/J", linked, external],
+                               check=True, capture_output=True)
+            else:
+                linked.symlink_to(external, target_is_directory=True)
+            with self.assertRaisesRegex(ValueError, "Redirected"):
                 support.verify_resources(root)
 
     def test_portable_environment_uses_checkout_tools_and_scrubs_borrowed_locations(self):
@@ -123,6 +164,21 @@ class PortableRuntimeTests(unittest.TestCase):
             self.assertEqual(runtime_manager.worker_selection(configs), [])
             (configs / "switches.local.json").write_text('{"enabled":true}', encoding="utf-8")
             self.assertEqual(runtime_manager.worker_selection(configs), ["switches"])
+
+    def test_worker_selection_rejects_mistyped_opt_ins(self):
+        import runtime_manager
+        with tempfile.TemporaryDirectory() as directory:
+            configs = Path(directory)
+            for value in ("false", 1, [], None):
+                with self.subTest(value=value):
+                    (configs / "collection.local.json").write_text(
+                        json.dumps({"enabled": value}), encoding="utf-8")
+                    with self.assertRaisesRegex(ValueError, "JSON boolean"):
+                        runtime_manager.worker_selection(configs)
+            (configs / "collection.local.json").unlink()
+            (configs / "monitoring.local.json").write_text('{"endpoints":"[]"}', encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "JSON array"):
+                runtime_manager.worker_selection(configs)
 
 
 if __name__ == "__main__":

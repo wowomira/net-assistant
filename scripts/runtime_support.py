@@ -76,19 +76,37 @@ def extract_zip(archive, target):
 
 
 def verify_resources(directory, expected_manifest=None):
-    directory = Path(directory).resolve()
+    directory = Path(directory).absolute()
     manifest = directory / "manifest.json"
+    if directory.resolve() != directory or manifest.resolve() != manifest:
+        raise ValueError("Redirected resource bundle or manifest.")
     if expected_manifest:
         check_hash(manifest, expected_manifest)
     value = json.loads(manifest.read_text("utf-8"))
-    if not value.get("files"):
+    files = value.get("files")
+    if not isinstance(files, dict) or not files:
         raise ValueError("Empty resource manifest.")
-    for name, digest in value["files"].items():
-        relative = safe_relative(name)
-        path = directory.joinpath(*relative.parts)
-        if not path.resolve().is_relative_to(directory):
-            raise ValueError("Resource junction redirects outside the bundle.")
-        check_hash(path, digest)
+    expected = {safe_relative(name).as_posix(): digest for name, digest in files.items()}
+    if len(expected) != len(files):
+        raise ValueError("Duplicate resource paths in manifest.")
+    # Install consumes entire tool directories and lets pip discover wheels.
+    # Verify the directory it will actually use, including unexpected entries.
+    directories = [directory]
+    while directories:
+        for path in directories.pop().iterdir():
+            if path.is_symlink() or path.is_junction():
+                raise ValueError("Redirected resource entry.")
+            if path.is_dir():
+                directories.append(path)
+                continue
+            if path == manifest:
+                continue
+            name = path.relative_to(directory).as_posix()
+            if name not in expected or not path.is_file():
+                raise ValueError(f"Unlisted or invalid resource: {name}")
+            check_hash(path, expected.pop(name))
+    if expected:
+        raise ValueError("Resource manifest lists files missing from the bundle.")
     return value
 
 
