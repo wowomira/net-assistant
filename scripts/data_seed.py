@@ -248,8 +248,10 @@ def screenshots(connection, source_root, destination_root):
         else:
             entry["file"] = name
             original = source_root / name
-            if original.resolve() != original or not original.is_file():
-                entry["reason"] = "artifact_not_available"
+            if original.resolve() != original:
+                entry["reason"] = "artifact_redirected"
+            elif not original.is_file():
+                entry["reason"] = "artifact_missing"
             else:
                 destination_root.mkdir(parents=True, exist_ok=True)
                 output = destination_root / name
@@ -292,6 +294,11 @@ def build_seed(source, destination):
             integrity(target)
             artifacts = screenshots(target, source.parent / "artifacts/screenshots",
                                     published / "artifacts/screenshots")
+            skipped = [entry for entry in artifacts if entry["status"] != "copied"]
+            if skipped:
+                reasons = Counter(entry.get("reason", "unknown") for entry in skipped)
+                print(f"Warning: {len(skipped)} screenshot(s) not exported: " + ", ".join(
+                    f"{reason}={count}" for reason, count in sorted(reasons.items())), file=sys.stderr)
             manifest = {
                 "format_version": 1, "created_at": now(), "private_data": True,
                 "source_snapshot": snapshot_info,

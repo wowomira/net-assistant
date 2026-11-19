@@ -5,12 +5,15 @@ import socket
 import threading
 import time
 import pytest
+import subprocess
+import sys
+from pathlib import Path
 
 
 @pytest.mark.parametrize("auth_protocol", ["SHA", "SHA256", "SHA512"])
 def test_actual_udp_snmpv3_collection_onboards_to_sqlite_and_unsupported_tables_stay_empty(tmp_path, monkeypatch, auth_protocol):
     # This test would fail if authPriv, numeric OIDs, bulk traversal or worker persistence broke.
-    from pysnmp.entity import config, engine
+    from pysnmp.entity import config
     from pysnmp.entity.rfc3413 import cmdrsp, context
     from pysnmp.carrier.asyncio.dgram import udp
     from pysnmp.proto import rfc1902, rfc1905
@@ -18,6 +21,7 @@ def test_actual_udp_snmpv3_collection_onboards_to_sqlite_and_unsupported_tables_
     from app.switches import projection as mib
     from app.switches.config import load_switch_plan
     from app.switches.worker import run_cycle
+    from app.switches.snmp import create_engine
     from app.switches.store import SwitchStore
     from app.discovery.store import initialize_database
     from test_switch_config import config as make_config
@@ -63,7 +67,7 @@ def test_actual_udp_snmpv3_collection_onboards_to_sqlite_and_unsupported_tables_
             pytest.fail("Collector must never issue SET.")
 
     async def scenario():
-        agent = engine.SnmpEngine()
+        _, agent = create_engine()
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         sock.bind(("127.0.0.1", 0))
         port = sock.getsockname()[1]
@@ -169,3 +173,15 @@ def test_loopback_timeout_is_not_a_successful_empty_snapshot(tmp_path):
             asyncio.run(collect_switch("127.0.0.1", plan.profiles[0], secret, plan))
     finally:
         sock.close()
+
+
+def test_engine_creation_survives_non_ascii_hostname():
+    backend = Path(__file__).resolve().parents[1]
+    code = (
+        "import platform; platform.node = lambda: '693\\u7684\\u7535\\u8111';"
+        "from app.switches.snmp import create_engine;"
+        "snmp, engine = create_engine(); engine.close_dispatcher()"
+    )
+    result = subprocess.run([sys.executable, "-c", code], cwd=backend,
+                            capture_output=True, text=True, errors="replace", timeout=60)
+    assert result.returncode == 0, result.stderr

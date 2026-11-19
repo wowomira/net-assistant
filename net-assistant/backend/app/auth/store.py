@@ -13,6 +13,11 @@ from uuid import uuid4
 
 from app.discovery.api import ApiError
 
+# Refreshes are throttled, so the effective idle window can be shorter than
+# IDLE_TIMEOUT by up to TOUCH_INTERVAL; it is never longer.
+TOUCH_INTERVAL = 60
+IDLE_TIMEOUT = 1800
+
 
 def digest(value: str) -> str:
     return hashlib.sha256(value.encode()).hexdigest()
@@ -156,22 +161,50 @@ class AuthStore:
             raise error
         return result
 
+    @staticmethod
+    def _principal(row, token_hash):
+        return Principal(row["id"], row["username"], row["role"], token_hash,
+                         row["csrf"], row["expires_at"])
+
+    @staticmethod
+    def _session(conn, token_hash):
+        return conn.execute("""SELECT u.id,u.username,u.role,u.enabled,s.* FROM auth_sessions s
+            JOIN auth_users u ON u.id=s.user_id WHERE token_hash=?""", (token_hash,)).fetchone()
+
+    @staticmethod
+    def _active_session(conn, token_hash, now):
+        return conn.execute("""SELECT u.id,u.username,u.role,u.enabled,s.* FROM auth_sessions s
+            JOIN auth_users u ON u.id=s.user_id
+            WHERE s.token_hash=? AND u.enabled=1 AND s.revoked=0
+              AND s.expires_at>? AND s.last_seen_at>?""",
+            (token_hash, now, now - IDLE_TIMEOUT)).fetchone()
+
     def authenticate(self, token) -> Principal | None:
         if not token or len(token) > 256:
             return None
         token_hash = digest(token)
+        now = self.clock()
+        with self.transaction(readonly=True) as conn:
+            row = self._session(conn, token_hash)
+        if not row or row["revoked"] or not row["enabled"]:
+            return None
+        if row["expires_at"] <= now or now - row["last_seen_at"] >= IDLE_TIMEOUT:
+            with self.transaction() as conn:
+                conn.execute("UPDATE auth_sessions SET revoked=1 WHERE token_hash=? AND revoked=0",
+                             (token_hash,))
+            return None
+        if now - row["last_seen_at"] < TOUCH_INTERVAL:
+            return self._principal(row, token_hash)
+        # Most requests only read. Refresh last_seen at most once per interval and
+        # recheck the session under the same write lock that updates it.
         with self.transaction() as conn:
             now = self.clock()
-            row = conn.execute("""SELECT u.id,u.username,u.role,u.enabled,s.* FROM auth_sessions s
-                JOIN auth_users u ON u.id=s.user_id WHERE token_hash=?""", (token_hash,)).fetchone()
-            if not row or row["revoked"] or not row["enabled"]:
+            fresh = self._active_session(conn, token_hash, now)
+            if fresh is None:
                 return None
-            if row["expires_at"] <= now or now - row["last_seen_at"] >= 1800:
-                conn.execute("UPDATE auth_sessions SET revoked=1 WHERE token_hash=?", (token_hash,))
-                return None
-            conn.execute("UPDATE auth_sessions SET last_seen_at=? WHERE token_hash=?", (now, token_hash))
-            return Principal(row["id"], row["username"], row["role"], token_hash, row["csrf"],
-                             row["expires_at"])
+            conn.execute("UPDATE auth_sessions SET last_seen_at=? WHERE token_hash=?",
+                         (now, token_hash))
+            return self._principal(fresh, token_hash)
 
     def _active_user(self, conn, principal):
         now = self.clock()
@@ -179,7 +212,7 @@ class AuthStore:
             JOIN auth_users u ON u.id=s.user_id
             WHERE s.token_hash=? AND u.id=? AND u.enabled=1 AND s.revoked=0
               AND s.expires_at>? AND s.last_seen_at>?""",
-            (principal.session_hash, principal.id, now, now - 1800)).fetchone()
+            (principal.session_hash, principal.id, now, now - IDLE_TIMEOUT)).fetchone()
 
     def principal_active(self, principal):
         with self.transaction(readonly=True) as conn:

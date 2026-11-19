@@ -185,6 +185,9 @@ def setup(index_url=None, wheelhouse=None):
     version = subprocess.check_output([node, "--version"], text=True).strip() if node else ""
     if version != "v24.11.0":
         raise ValueError("Pinned Node.js is 24.11.0 (npm 11.6.1). Use this version or bootstrap.ps1.")
+    npm_version = subprocess.check_output([npm, "--version"], text=True).strip()
+    if not npm_version.startswith("11.6."):
+        raise ValueError("Pinned npm is 11.6.x (Node 24.11.0 ships 11.6.1); the lockfile is not portable.")
     paths = layout()
     if not paths["python"].is_file():
         venv.EnvBuilder(with_pip=True).create(paths["runtime"] / "venv")
