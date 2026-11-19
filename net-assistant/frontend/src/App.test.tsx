@@ -61,6 +61,26 @@ function fakeApi(override?: (path: string) => Response | Promise<Response> | und
 afterEach(() => { cleanup(); vi.unstubAllGlobals() })
 
 describe('最小工作台真实读取语义（隔离响应）', () => {
+  it('打开资产页只查资产，切到扫描页才读取批次目录', async () => {
+    let delayAssets = false
+    let finishAssets: ((response: Response) => void) | undefined
+    const requests = fakeApi(path => {
+      if (delayAssets && path === '/api/v1/assets') return new Promise(resolve => { finishAssets = resolve })
+    })
+    render(<App />)
+    await screen.findByRole('button', { name: '查看 隔离测试资产' })
+    expect(requests.map(request => request.path)).toEqual(['/api/v1/assets?limit=200'])
+    fireEvent.click(screen.getByRole('button', { name: '扫描批次' }))
+    await screen.findByRole('heading', { name: '当次执行结果' })
+    expect(requests.some(request => request.path.startsWith('/api/v1/discovery-jobs?'))).toBe(true)
+    expect(requests.some(request => request.path.startsWith('/api/v1/scheduler'))).toBe(false)
+    delayAssets = true
+    fireEvent.click(screen.getByRole('button', { name: '资产台账' }))
+    expect(screen.queryByRole('button', { name: '查看 隔离测试资产' })).toBeNull()
+    await waitFor(() => expect(finishAssets).toBeDefined())
+    finishAssets!(new Response(JSON.stringify({ items: [], nextCursor: null })))
+    await screen.findByText('暂无资产档案')
+  })
   it('临时Demo只保留数据，不再展示解释型侧栏、项目能力介绍与长篇开场', async () => {
     fakeApi()
     const { container } = render(<App />)
@@ -127,6 +147,49 @@ describe('最小工作台真实读取语义（隔离响应）', () => {
     expect(await screen.findByText(/刷新测试失败/)).toBeTruthy()
     expect(screen.getByText(/保留上次读取/)).toBeTruthy()
     expect(screen.getByRole('button', { name: '查看 隔离测试资产' })).toBeTruthy()
+  })
+  it('详情 401 会清除整个工作台，重新登录后只显示新读取的数据', async () => {
+    let expired = false
+    let restored = false
+    fakeApi(path => {
+      if (expired && path.endsWith('/observations')) return new Response(JSON.stringify({
+        message: '请先登录平台。', code: 'authentication_required', requestId: 'expired-session',
+      }), { status: 401 })
+      if (restored && path === '/api/v1/assets') return new Response(JSON.stringify({
+        items: [{ ...asset, id: 'new-asset', name: '新会话资产' }], nextCursor: null,
+      }))
+    })
+    render(<App />)
+    fireEvent.click(await screen.findByRole('button', { name: '查看 隔离测试资产' }))
+    await screen.findByText(observation.address)
+    expired = true
+    fireEvent.click(screen.getByRole('button', { name: '刷新数据' }))
+    await screen.findByRole('heading', { name: '请先登录网维助手' })
+    expect(screen.getByText(/expired-session/)).toBeTruthy()
+    expect(screen.queryByRole('button', { name: '查看 隔离测试资产' })).toBeNull()
+    expect(screen.queryByText(observation.address)).toBeNull()
+    expired = false
+    restored = true
+    fireEvent.click(screen.getByRole('button', { name: '重新读取工作台' }))
+    await screen.findByRole('button', { name: '查看 新会话资产' })
+    expect(screen.queryByRole('region', { name: '资产详情' })).toBeNull()
+  })
+  it('403 清空受限目录及已打开的详情，其他页面仍可读取', async () => {
+    let forbidden = false
+    fakeApi(path => forbidden && path === '/api/v1/assets' ? new Response(JSON.stringify({
+      message: '无法读取资产', code: 'permission_denied', requestId: 'asset-permission',
+    }), { status: 403 }) : undefined)
+    render(<App />)
+    fireEvent.click(await screen.findByRole('button', { name: '查看 隔离测试资产' }))
+    await screen.findByText(observation.address)
+    forbidden = true
+    fireEvent.click(screen.getByRole('button', { name: '刷新数据' }))
+    await screen.findByText(/asset-permission/)
+    expect(screen.queryByRole('button', { name: '查看 隔离测试资产' })).toBeNull()
+    expect(screen.queryByRole('region', { name: '资产详情' })).toBeNull()
+    expect(screen.queryByText(/保留上次读取/)).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: '每日调度' }))
+    await screen.findByText('未配置每日计划')
   })
   it('切换资产时旧请求晚到不会覆盖新资产历史', async () => {
     let finishOld: ((response: Response) => void) | undefined
