@@ -34,4 +34,4 @@ jobs:
       - name: Unit, HTTP and frontend regression tests
         run: powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\bootstrap.ps1 test
       - name: Verify committed source manifest
-        run: .\.runtime\python\python.exe scripts/collaboration_snapshot.py --verify
+        run: .\.runtime\python\python.exe scripts/collaboration_snapshot.py --verify --require-git

@@ -27,6 +27,17 @@ class DeliverySourceTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "new.py"):
                     snapshot.verify(root)
 
+    def test_inventory_verification_requires_git_for_completeness(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "app.py").write_text("pass", encoding="utf-8")
+            manifest = {"files": {"app.py": snapshot.digest(root / "app.py")},
+                        "complete_current_source_files": 1}
+            (root / "source-manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+            snapshot.verify(root)
+            with self.assertRaisesRegex(ValueError, "Git checkout"):
+                snapshot.verify(root, require_git=True)
+
     def test_manifest_paths_stay_inside_exported_source(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory) / "source"
@@ -38,7 +49,7 @@ class DeliverySourceTests(unittest.TestCase):
                     manifest = {"files": {name: snapshot.digest(outside)}, "complete_current_source_files": 1}
                     (root / "source-manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
                     with self.assertRaisesRegex(ValueError, "source path"):
-                        snapshot.verify(root)
+                        snapshot.verify(root, require_git=False)
 
     def test_snapshot_keeps_untracked_code_and_redacts_only_documentation(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -61,13 +72,13 @@ class DeliverySourceTests(unittest.TestCase):
             self.assertNotIn(b"\r\r\n", (target / "docs/history.md").read_bytes())
             self.assertNotIn("10.9.0.10", history)
             self.assertNotIn("AA:BB:CC:DD:EE:FF", history)
-            snapshot.verify(target)
+            snapshot.verify(target, require_git=False)
             # Git's expected CRLF conversion must not produce a false corruption.
             (target / "app/untracked.py").write_bytes(code.replace(b"\r\n", b"\n"))
-            snapshot.verify(target)
+            snapshot.verify(target, require_git=False)
             (target / "app/untracked.py").write_bytes(b"code was actually lost\n")
             with self.assertRaisesRegex(ValueError, "differs"):
-                snapshot.verify(target)
+                snapshot.verify(target, require_git=False)
 
     def test_tracked_private_database_or_real_token_blocks_release_before_copy(self):
         for name, content in [

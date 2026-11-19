@@ -203,7 +203,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\bootstrap.ps1 test --l
 .\.runtime\python\python.exe .\scripts\collaboration_snapshot.py --verify
 ```
 
-缺少工具或未显式启用时，相关测试会说明跳过原因；跳过不算真实工具验证通过。源码清单用于核对交付内容，开发后出现指纹变化不等于代码丢失。
+缺少工具或未显式启用时，相关测试会说明跳过原因；跳过不算真实工具验证通过。源码清单用于核对交付内容，开发后出现指纹变化不等于代码丢失。没有Git元数据时，`--verify`只核对清单内的文件指纹；CI使用`--require-git`强制检查完整文件清单。
 
 仓库包含源码安装和配套资源重建两条 Windows CI。实际测试证据、离线重建范围及未验收事项见[交付验收报告](docs/GitHub协作交付验收-2026-11-16.md)和具体 Actions 运行记录；CI 不替代真实厂商设备或第二台实体 Windows 的验收。
 

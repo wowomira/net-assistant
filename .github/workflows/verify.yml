@@ -15,7 +15,7 @@ jobs:
           python-version: '3.13.7'
           architecture: x64
       - name: Verify tracked source inventory
-        run: python scripts/collaboration_snapshot.py --verify
+        run: python scripts/collaboration_snapshot.py --verify --require-git
       - uses: actions/setup-node@v4
         with:
           node-version: '24.11.0'

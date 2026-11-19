@@ -151,6 +151,40 @@ def test_idle_absolute_expiry_and_password_hash_salt(tmp_path):
     assert principal is None
 
 
+def test_session_touch_is_throttled_without_weakening_idle_expiry(tmp_path):
+    db, store = setup(tmp_path)
+    instant = time.time()
+    store.clock = lambda: instant
+    token = store.login("administrator", PASSWORD, "127.0.0.1")["token"]
+
+    def last_seen():
+        with sqlite3.connect(db.path) as conn:
+            return conn.execute("SELECT last_seen_at FROM auth_sessions").fetchone()[0]
+
+    initial = last_seen()
+    instant += 5
+    assert store.authenticate(token) is not None
+    assert last_seen() == initial  # Read-only fast path, no write amplification.
+    instant += 60
+    assert store.authenticate(token) is not None
+    assert last_seen() == instant
+    instant += 1800
+    assert store.authenticate(token) is None
+    with sqlite3.connect(db.path) as conn:
+        assert conn.execute("SELECT revoked FROM auth_sessions").fetchone()[0] == 1
+
+
+def test_throttled_touch_shortens_but_never_extends_idle_window(tmp_path):
+    db, store = setup(tmp_path)
+    instant = time.time()
+    store.clock = lambda: instant
+    token = store.login("administrator", PASSWORD, "127.0.0.1")["token"]
+    instant += 5
+    assert store.authenticate(token) is not None  # Within the touch interval.
+    instant += 1795  # IDLE_TIMEOUT measured from the last recorded touch.
+    assert store.authenticate(token) is None
+
+
 def test_password_and_role_validation_and_no_anonymous_write_bypass(tmp_path):
     db, store = setup(tmp_path)
     with pytest.raises(ValueError):

@@ -6,6 +6,7 @@ from pathlib import Path, PurePosixPath
 import re
 import shutil
 import subprocess
+import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -130,7 +131,7 @@ def build(output, root=ROOT):
         raise
 
 
-def verify(root=ROOT):
+def verify(root=ROOT, *, require_git=False):
     root = Path(root).resolve()
     manifest = json.loads(source_path(root, "source-manifest.json").read_text("utf-8"))
     files = manifest["files"]
@@ -142,6 +143,10 @@ def verify(root=ROOT):
         tracked.discard("source-manifest.json")
         if tracked != files.keys():
             raise ValueError("Git and manifest file lists differ: " + ", ".join(sorted(tracked ^ files.keys())))
+    elif require_git:
+        raise ValueError("A Git checkout is required to verify the complete source inventory.")
+    else:
+        print("Warning: no Git metadata; inventory completeness was not checked.", file=sys.stderr)
     for name, expected in files.items():
         path = source_path(root, name)
         if not path.is_file() or digest(path) != expected:
@@ -153,9 +158,11 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path)
     parser.add_argument("--verify", action="store_true")
+    parser.add_argument("--require-git", action="store_true",
+                        help="fail --verify when Git metadata cannot prove inventory completeness")
     args = parser.parse_args()
     if args.verify:
-        verify()
+        verify(require_git=args.require_git)
     elif args.output:
         value = build(args.output)
         print(f"Complete source candidate: {args.output.resolve()} ({len(value['files'])} files)")

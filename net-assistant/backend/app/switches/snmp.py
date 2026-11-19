@@ -1,10 +1,44 @@
 """SNMPv3 authPriv only; bounded numeric GET/GETBULK, never SET."""
 import asyncio
+from contextlib import contextmanager
 import ipaddress
+import platform
+import threading
 import time
 
 from app.discovery.types import utc_now
 from app.switches import projection as mib
+
+
+_ENGINE_LOCK = threading.Lock()
+
+
+def _ascii_node(value: str) -> str | None:
+    if all(ord(char) < 256 for char in value):
+        return None
+    return value.encode("ascii", "ignore").decode("ascii") or "net-assistant"
+
+
+@contextmanager
+def _portable_node():
+    """PySNMP builds its default engine ID from the first 16 hostname characters."""
+    with _ENGINE_LOCK:
+        original = platform.node
+        replacement = _ascii_node(original()[:16])
+        if replacement is not None:
+            platform.node = lambda: replacement
+        try:
+            yield
+        finally:
+            if replacement is not None:
+                platform.node = original
+
+
+def create_engine():
+    """Create the PySNMP engine even when the OS hostname contains non-ASCII text."""
+    with _portable_node():
+        from pysnmp.hlapi.v3arch import asyncio as snmp
+        return snmp, snmp.SnmpEngine()
 
 
 class SnmpFailure(RuntimeError):
@@ -44,9 +78,11 @@ def _value(value):
 
 class Session:
     async def open(self, address, profile, secrets, plan):
-        from pysnmp.hlapi.v3arch import asyncio as snmp
-        self.snmp = snmp
-        self.engine = snmp.SnmpEngine()
+        try:
+            self.snmp, self.engine = create_engine()
+        except Exception as error:
+            raise SnmpFailure("snmp_engine_unavailable") from error
+        snmp = self.snmp
         self.auth = snmp.UsmUserData(
             profile.username,
             secrets.auth_key.get_secret_value(), secrets.priv_key.get_secret_value(),

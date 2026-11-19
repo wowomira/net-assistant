@@ -1,6 +1,7 @@
 """Seed tests use invented data and temporary databases, never the working DB."""
-from contextlib import closing
+from contextlib import closing, redirect_stderr
 import importlib.util
+import io
 import json
 import os
 from pathlib import Path
@@ -166,8 +167,11 @@ class DataSeedTests(unittest.TestCase):
             seed.import_seed(self.output, target)
         self.assertFalse(target.exists())
         exported = self.root / "reexport/history.sqlite"
-        entry = seed.build_seed(self.output, exported)["screenshots"][0]
-        self.assertEqual(entry["reason"], "artifact_not_available")
+        warning = io.StringIO()
+        with redirect_stderr(warning):
+            entry = seed.build_seed(self.output, exported)["screenshots"][0]
+        self.assertEqual(entry["reason"], "artifact_redirected")
+        self.assertIn("1 screenshot(s) not exported", warning.getvalue())
         self.assertFalse((exported.parent / "artifacts").exists())
 
     def test_build_failure_leaves_no_published_bundle_and_does_not_replace_existing_seed(self):
