@@ -11,6 +11,35 @@ import collaboration_snapshot as snapshot
 
 
 class DeliverySourceTests(unittest.TestCase):
+    def test_checkout_inventory_covers_all_tracked_sources(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / ".git").mkdir()
+            (root / "app.py").write_text("pass", encoding="utf-8")
+            manifest = {"files": {"app.py": snapshot.digest(root / "app.py")},
+                        "complete_current_source_files": 1}
+            (root / "source-manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+            tracked = b"app.py\0source-manifest.json\0"
+            with patch.object(snapshot.subprocess, "check_output", return_value=tracked) as ls_files:
+                snapshot.verify(root)
+                ls_files.assert_called_once_with(["git", "ls-files", "--cached", "-z"], cwd=root.resolve())
+            with patch.object(snapshot.subprocess, "check_output", return_value=tracked + b"new.py\0"):
+                with self.assertRaisesRegex(ValueError, "new.py"):
+                    snapshot.verify(root)
+
+    def test_manifest_paths_stay_inside_exported_source(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory) / "source"
+            root.mkdir()
+            outside = root.parent / "other.py"
+            outside.write_text("pass", encoding="utf-8")
+            for name in ("../other.py", str(outside), "C:/other.py"):
+                with self.subTest(name=name):
+                    manifest = {"files": {name: snapshot.digest(outside)}, "complete_current_source_files": 1}
+                    (root / "source-manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+                    with self.assertRaisesRegex(ValueError, "source path"):
+                        snapshot.verify(root)
+
     def test_snapshot_keeps_untracked_code_and_redacts_only_documentation(self):
         with tempfile.TemporaryDirectory() as directory:
             root, target = Path(directory) / "source", Path(directory) / "candidate"
