@@ -2,12 +2,23 @@
 import argparse
 import hashlib
 import json
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 import re
 import shutil
 import subprocess
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+def source_path(root, name):
+    relative = PurePosixPath(name)
+    if (not relative.parts or relative.as_posix() != name or relative.is_absolute()
+            or ".." in relative.parts or "\\" in name or ":" in name):
+        raise ValueError(f"Invalid source path: {name}")
+    path = root / relative
+    if path.resolve() != path:
+        raise ValueError(f"Redirected source path: {name}")
+    return path
 
 
 def digest(path):
@@ -57,7 +68,7 @@ def build(output, root=ROOT):
     sources, transformed = {}, []
     # Do not inherit old Git history. Real local state is never in this new repository.
     for name in names:
-        path = root / name
+        path = source_path(root, name)
         if name == "source-manifest.json" or not path.is_file():
             continue
         parts = set(Path(name).parts)
@@ -121,11 +132,21 @@ def build(output, root=ROOT):
 
 def verify(root=ROOT):
     root = Path(root).resolve()
-    manifest = json.loads((root / "source-manifest.json").read_text("utf-8"))
-    for name, expected in manifest["files"].items():
-        if digest(root / name) != expected:
+    manifest = json.loads(source_path(root, "source-manifest.json").read_text("utf-8"))
+    files = manifest["files"]
+    if not files or manifest["complete_current_source_files"] != len(files):
+        raise ValueError("Source inventory count differs from the manifest.")
+    if (root / ".git").exists():
+        raw = subprocess.check_output(["git", "ls-files", "--cached", "-z"], cwd=root)
+        tracked = {name.decode("utf-8") for name in raw.split(b"\0") if name}
+        tracked.discard("source-manifest.json")
+        if tracked != files.keys():
+            raise ValueError("Git and manifest file lists differ: " + ", ".join(sorted(tracked ^ files.keys())))
+    for name, expected in files.items():
+        path = source_path(root, name)
+        if not path.is_file() or digest(path) != expected:
             raise ValueError(f"Source fingerprint differs: {name}")
-    print(f"All {len(manifest['files'])} inventoried source files match.")
+    print(f"All {len(files)} inventoried source files match.")
 
 
 if __name__ == "__main__":

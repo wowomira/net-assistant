@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { type Asset, type Job, type Scheduler, getJson, readCatalog } from './api'
-import { useRead } from './components'
+import { ApiError, type Asset, type Job, type Scheduler, getJson, readCatalog } from './api'
+import { SessionExpiredContext, useRead } from './components'
 import { AssetsView } from './AssetsView'
 import { EvidenceView, ScansView } from './DiscoveryView'
 import { SchedulerView } from './SchedulerView'
@@ -16,12 +16,26 @@ const pages = [
 type PageId = typeof pages[number]['id']
 
 export default function App() {
+  const [authError, setAuthError] = useState<ApiError | null>(null)
+  if (authError) return <main className="demo">
+    <h1>请先登录网维助手</h1>
+    <div role="alert" className="error-box">
+      <strong>{authError.message}</strong>
+      {authError.requestId && <small>请求编号：{authError.requestId}</small>}
+    </div>
+    <p>在同一浏览器的后端接口文档中登录，然后重新读取工作台。</p>
+    <button className="primary" onClick={() => setAuthError(null)}>重新读取工作台</button>
+  </main>
+  return <SessionExpiredContext.Provider value={setAuthError}><Workbench /></SessionExpiredContext.Provider>
+}
+
+function Workbench() {
   const [page, setPage] = useState<PageId>('assets')
   const [version, setVersion] = useState(0)
   const [evidence, setEvidence] = useState({ jobId: '', address: '', revision: 0 })
-  const assets = useRead('assets', version, signal => readCatalog<Asset>('/assets', signal))
-  const jobs = useRead('jobs', version, signal => readCatalog<Job>('/discovery-jobs', signal))
-  const scheduler = useRead('scheduler', version, signal => getJson<Scheduler>('/scheduler', signal))
+  const assets = useRead(page === 'assets' ? 'assets' : null, version, signal => readCatalog<Asset>('/assets', signal))
+  const jobs = useRead(page === 'scans' || page === 'evidence' ? 'jobs' : null, version, signal => readCatalog<Job>('/discovery-jobs', signal))
+  const scheduler = useRead(page === 'scheduler' ? 'scheduler' : null, version, signal => getJson<Scheduler>('/scheduler', signal))
   const current = pages.find(item => item.id === page)!
   const loading = assets.loading || jobs.loading || scheduler.loading
   const showEvidence = (jobId: string, address: string) => {

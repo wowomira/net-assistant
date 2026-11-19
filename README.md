@@ -180,7 +180,7 @@ SSH 和 SNMP 使用自己的设备账号、密钥、主机密钥及协议凭据�
 - **前端开发**：编辑 `net-assistant/frontend/src/`，不要修改 `.runtime/frontend/src/`；后者会被构建流程同步。
 - **接口契约**：以 `net-assistant/backend/docs/openapi-0.10.0.json` 和实际运行服务的 `/openapi.json` 为准。API 变更需同步契约、前端类型、测试及对接说明。
 - **前端任务**：按[前端对接说明](net-assistant/backend/docs/前端对接说明.md)对接已有 API；正式登录、改密、会话失效及网页终端交互需继续开发，不另造演示数据接口替代真实后端。
-- **本地联调**：优先使用快速开始的同源模式。现有 Vite 开发代理指向 `8000`，若单独开发前端并对接默认 `8001` 后端，需调整代理并核对登录请求的同源策略，不通过放宽认证或 CSRF 校验绕过问题。
+- **本地联调**：使用快速开始的同源模式，或在前端源码目录运行 `npm run dev`，打开 `http://127.0.0.1:5182/console/`。Vite 将 `/api`、`/health` 和 `/openapi.json` 转发到默认后端 `127.0.0.1:8001`，保留浏览器请求的 Host 和 Origin。自定义后端端口时，同步更新前端 `vite.config.ts` 中的 `backend.target`。
 - **团队协作**：每人独立 clone、独立运行库与账号，通过分支和 Pull Request 审阅，不共享 `.runtime` 或私钥。
 
 如需使用系统 Python/Node 开发环境，已验证的固定基线为 **Python 3.13.7、Node.js 24.11.0／npm 11.6.1**。替代安装命令和提交规范见 [CONTRIBUTING.md](CONTRIBUTING.md)；不要将不同安装路线的环境混用。

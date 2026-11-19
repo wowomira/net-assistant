@@ -81,11 +81,13 @@ class AssetRegistry:
         ))
 
     @staticmethod
-    def _view(session, row):
-        count, last = session.execute(select(func.count(AssetLinkRow.sequence),
-                                            func.max(HostRow.observed_at)).join(
-            HostRow, HostRow.id == AssetLinkRow.discovery_host_id
-        ).where(AssetLinkRow.asset_id == row.id)).one()
+    def _asset_summaries():
+        return select(AssetRow, func.count(AssetLinkRow.sequence), func.max(HostRow.observed_at)).outerjoin(
+            AssetLinkRow, AssetLinkRow.asset_id == AssetRow.id
+        ).outerjoin(HostRow, HostRow.id == AssetLinkRow.discovery_host_id).group_by(AssetRow.sequence)
+
+    @staticmethod
+    def _view(row, count, last):
         return {**{name: getattr(row, name) for name in (
             "id", "scope_id", "name", "asset_kind", "owner", "notes", "revision",
             "created_at", "updated_at",
@@ -112,7 +114,7 @@ class AssetRegistry:
                         {"name": row.name, "assetKind": row.asset_kind, "owner": row.owner,
                          "notes": row.notes})
             session.flush()
-            result = self._view(session, row)
+            result = self._get_asset_view(session, row.id)
         return result
 
     def link(self, asset_id, host_id, *, expected_revision, reason):
@@ -127,14 +129,14 @@ class AssetRegistry:
             if existing:
                 if existing.asset_id != asset_id:
                     raise RegistryError("observation_already_linked", "先撤回错误关联，再确认新的资产关联。")
-                return self._view(session, asset)  # Safe retry; do not append duplicate history/audit.
+                return self._get_asset_view(session, asset.id)  # Safe retry; no duplicate history/audit.
             self._revision(asset, data.expected_revision)
             asset.revision += 1
             asset.updated_at = utc_now()
             self._attach(session, asset, host.id, data.reason)
             self._audit(session, asset, "linked", data.reason, host.id)
             session.flush()
-            result = self._view(session, asset)
+            result = self._get_asset_view(session, asset.id)
         return result
 
     def unlink(self, asset_id, host_id, *, expected_revision, reason):
@@ -153,7 +155,7 @@ class AssetRegistry:
             asset.updated_at = utc_now()
             self._audit(session, asset, "unlinked", data.reason, host_id, details)
             session.flush()
-            result = self._view(session, asset)
+            result = self._get_asset_view(session, asset.id)
         return result
 
     def update(self, asset_id, *, expected_revision, reason, **changes):
@@ -167,38 +169,44 @@ class AssetRegistry:
             before = {key: getattr(asset, key) for key in supplied}
             after = {key: getattr(data, key) for key in supplied}
             if before == after:
-                return self._view(session, asset)
+                return self._get_asset_view(session, asset.id)
             for key, value in after.items():
                 setattr(asset, key, value)
             asset.revision += 1
             asset.updated_at = utc_now()
             self._audit(session, asset, "updated", data.reason, details={"before": before, "after": after})
             session.flush()
-            result = self._view(session, asset)
+            result = self._get_asset_view(session, asset.id)
         return result
+
+    def _get_asset_view(self, session, asset_id):
+        row = session.execute(self._asset_summaries().where(AssetRow.id == asset_id)).one_or_none()
+        if row is None:
+            raise RegistryError("asset_not_found", "找不到该资产。", 404)
+        return self._view(*row)
 
     def get_asset(self, asset_id):
         with Session(self.db.engine) as session:
-            return self._view(session, self._asset(session, asset_id))
+            return self._get_asset_view(session, asset_id)
 
     def list_assets(self, limit=50, cursor=None):
         with Session(self.db.engine) as session:
-            return self.db._page(session, select(AssetRow), AssetRow,
-                                 lambda row: self._view(session, row), limit, cursor)
+            return self.db._page(session, self._asset_summaries(), AssetRow, self._view, limit, cursor)
 
     def list_observations(self, asset_id, limit=50, cursor=None):
         with Session(self.db.engine) as session:
             self._asset(session, asset_id)
 
-            def view(link):
-                host, job = self._host(session, link.discovery_host_id)
+            def view(link, host, scope_id):
                 return {"id": link.id, "asset_id": link.asset_id, "discovery_host_id": host.id,
-                        "job_id": host.job_id, "scope_id": job.scope_id, "address": host.address,
+                        "job_id": host.job_id, "scope_id": scope_id, "address": host.address,
                         "mac": host.mac, "observed_at": host.observed_at, "confidence": host.confidence,
                         "confirmed_at": link.confirmed_at, "reason": link.reason, "actor": link.actor}
 
-            return self.db._page(session, select(AssetLinkRow).where(
-                AssetLinkRow.asset_id == asset_id), AssetLinkRow, view, limit, cursor)
+            statement = select(AssetLinkRow, HostRow, JobRow.scope_id).select_from(AssetLinkRow).join(
+                HostRow, HostRow.id == AssetLinkRow.discovery_host_id
+            ).join(JobRow, JobRow.id == HostRow.job_id).where(AssetLinkRow.asset_id == asset_id)
+            return self.db._page(session, statement, AssetLinkRow, view, limit, cursor)
 
     def list_audit(self, asset_id, limit=50, cursor=None):
         with Session(self.db.engine) as session:
@@ -219,15 +227,15 @@ class AssetRegistry:
             mac = canonical_mac(host.mac)
             # Normalize legacy MAC spelling inside SQL; all matches still require manual confirmation.
             normalized = func.upper(func.replace(HostRow.mac, "-", ":"))
-            base = select(AssetRow.id).join(
+            base = select(AssetRow.id, AssetRow.name).join(
                 AssetLinkRow, AssetLinkRow.asset_id == AssetRow.id
             ).join(HostRow, HostRow.id == AssetLinkRow.discovery_host_id).where(
                 AssetRow.scope_id == job.scope_id)
-            ids = list(session.scalars(base.where(normalized == mac).distinct()
-                                       .order_by(AssetRow.id).limit(21))) if mac else []
-            candidates = [{"asset_id": item, "name": self._asset(session, item).name,
+            matches = session.execute(base.where(normalized == mac).distinct()
+                                      .order_by(AssetRow.id).limit(21)).all() if mac else []
+            candidates = [{"asset_id": asset_id, "name": name,
                            "evidence": "same_scope_mac_history", "identity_verified": False}
-                          for item in ids[:20]]
+                          for asset_id, name in matches[:20]]
             # An IP reuse warning is only evidence from previously confirmed links, not identity proof.
             same_address = base.where(HostRow.address == host.address)
             if mac:
@@ -240,7 +248,7 @@ class AssetRegistry:
                 "discovery_host_id": host_id, "asset_id": linked,
                 "association_status": "linked" if linked else "unlinked",
                 "requires_confirmation": linked is None, "candidates": candidates,
-                "ambiguous": len(ids) > 1, "candidates_truncated": len(ids) > 20,
+                "ambiguous": len(matches) > 1, "candidates_truncated": len(matches) > 20,
                 "address_conflict": address_conflict,
                 "confirmable": host.confidence == "direct_response"
                                and job.state in ("completed", "partial"),

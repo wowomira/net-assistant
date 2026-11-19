@@ -64,7 +64,20 @@ def worker_selection(configs):
         ("monitoring", "monitoring.local.json", "endpoints"),
     ):
         path = Path(configs) / file
-        if path.is_file() and json.loads(path.read_text("utf-8-sig")).get(enabled):
+        if not path.is_file():
+            continue
+        config = json.loads(path.read_text("utf-8-sig"))
+        if not isinstance(config, dict):
+            raise ValueError(f"{file} must contain a JSON object.")
+        if enabled == "endpoints":
+            selected = config.get(enabled, [])
+            if not isinstance(selected, list):
+                raise ValueError(f"{file}: endpoints must be a JSON array.")
+        else:
+            selected = config.get(enabled, False)
+            if not isinstance(selected, bool):
+                raise ValueError(f"{file}: enabled must be a JSON boolean.")
+        if selected:
             result.append(name)
     return result
 

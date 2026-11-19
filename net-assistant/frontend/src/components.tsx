@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
 import { ApiError, type Catalog } from './api'
 import { formatTime, isStale, statusInfo } from './model'
 
@@ -10,16 +10,24 @@ export interface Resource<T> {
   readAt: number | null
 }
 
-/** Keep failed refreshes visibly stale; discard completions for a previous selection. */
+export const SessionExpiredContext = createContext<((error: ApiError) => void) | null>(null)
+
+/** Keep cached results on transient failures. Session expiry clears the entire workbench. */
 export function useRead<T>(key: string | null, version: number,
   load: (signal: AbortSignal) => Promise<T>): Resource<T> {
   const loader = useRef(load)
+  const onSessionExpired = useContext(SessionExpiredContext)
   loader.current = load
   const [value, setValue] = useState<Resource<T>>({
     key: null, data: null, loading: false, error: null, readAt: null,
   })
   useEffect(() => {
-    if (key === null) return
+    if (key === null) {
+      setValue(previous => previous.key === null ? previous : {
+        key: null, data: null, loading: false, error: null, readAt: null,
+      })
+      return
+    }
     const controller = new AbortController()
     let active = true
     setValue(previous => ({
@@ -29,12 +37,18 @@ export function useRead<T>(key: string | null, version: number,
     loader.current(controller.signal).then(data => {
       if (active) setValue({ key, data, loading: false, error: null, readAt: Date.now() })
     }).catch(error => {
-      if (active) setValue(previous => ({
-        ...previous, loading: false, error: error instanceof Error ? error : new Error('读取失败'),
-      }))
+      if (!active) return
+      if (error instanceof ApiError && (error.status === 401 || error.status === 403)) {
+        setValue({ key, data: null, loading: false, error, readAt: null })
+        if (error.status === 401) onSessionExpired?.(error)
+      } else {
+        setValue(previous => ({
+          ...previous, loading: false, error: error instanceof Error ? error : new Error('读取失败'),
+        }))
+      }
     })
     return () => { active = false; controller.abort() }
-  }, [key, version])
+  }, [key, version, onSessionExpired])
   return value.key === key ? value : { key, data: null, loading: key !== null, error: null, readAt: null }
 }
 

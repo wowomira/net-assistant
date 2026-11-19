@@ -31,8 +31,8 @@ git push -u origin HEAD
 在前端源码目录执行 `npm run generate:api`、`npm run typecheck` 和 `npm test`。
 生成入口已经从旧 0.6.0 改为 0.10.0。API 变更必须同步契约、类型和对接说明。
 
-建议先用 README 的同源构建模式联调。原 Vite 开发代理仍指向 8000；
-如用 8001 后端须单独调整，登录 POST 的 Origin 也须一致，不能以放宽同源校验掩盖问题。
+建议先用 README 的同源构建模式联调。独立开发时使用 Vite 的 5182 入口，
+代理默认指向本机 8001，保留浏览器的 Host 和 Origin 供后端校验。修改后端端口时同步调整 `vite.config.ts`。
 源码版本不是正在运行的旧 API 版本，务必核对 `/openapi.json`。
 
 ## 数据与迁移

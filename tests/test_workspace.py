@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 import sqlite3
 import os
+import subprocess
 import sys
 from unittest.mock import patch
 import tempfile
@@ -142,6 +143,43 @@ class WorkspaceTests(unittest.TestCase):
             workspace.sync_frontend(root)
             self.assertFalse((target / "src/deleted.tsx").exists())
             self.assertTrue((target / "node_modules/keep").is_file())
+
+    def test_frontend_sync_checks_redirects_before_copying_package_files(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory) / "checkout"
+            source = root / "net-assistant/frontend"
+            source.mkdir(parents=True)
+            (source / "package.json").write_text("replacement", encoding="utf-8")
+            external = Path(directory) / "other project"
+            external.mkdir()
+            package = external / "package.json"
+            package.write_text("original", encoding="utf-8")
+            runtime = root / ".runtime"
+            runtime.mkdir()
+            target = runtime / "frontend"
+            if os.name == "nt":
+                subprocess.run(["cmd", "/d", "/c", "mklink", "/J", target, external],
+                               check=True, capture_output=True)
+            else:
+                target.symlink_to(external, target_is_directory=True)
+            with self.assertRaisesRegex(ValueError, "redirected"):
+                workspace.sync_frontend(root)
+            self.assertEqual(package.read_text("utf-8"), "original")
+
+    def test_frontend_sync_does_not_overwrite_a_shared_package_file_on_repeat(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory) / "checkout"
+            source = root / "net-assistant/frontend"
+            source.mkdir(parents=True)
+            package = source / "package.json"
+            package.write_text("original", encoding="utf-8")
+            workspace.sync_frontend(root)
+            external = Path(directory) / "other-package.json"
+            external.hardlink_to(root / ".runtime/frontend/package.json")
+            package.write_text("replacement", encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "redirected"):
+                workspace.sync_frontend(root)
+            self.assertEqual(external.read_text("utf-8"), "original")
 
 
 if __name__ == "__main__":

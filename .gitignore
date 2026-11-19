@@ -1,5 +1,6 @@
 # Machine-specific state never belongs in the collaboration repository.
 .runtime/
+/runtime-resources-win-x64.zip
 .verification/
 .local-backups/
 **/.venv/
