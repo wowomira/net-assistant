@@ -98,6 +98,39 @@ def test_account_disable_and_password_change_revoke_existing_sessions(tmp_path):
         assert client.get("/api/v1/assets").status_code == 401
 
 
+@pytest.mark.parametrize("intervening_action", ["reset", "logout", "expiry"])
+def test_password_change_rechecks_authorization_at_commit(tmp_path, monkeypatch, intervening_action):
+    import app.auth.store as auth
+    from app.discovery.api import ApiError
+
+    db, store = setup(tmp_path)
+    token = store.login("administrator", PASSWORD, "127.0.0.1")["token"]
+    principal = store.authenticate(token)
+    admin_password = "admin-reset-password-195!"
+    verify = auth.verify_password
+
+    # Deterministically interleave another action after verifying the old password.
+    def verify_then_interleave(password, encoded):
+        assert verify(password, encoded)
+        if intervening_action == "reset":
+            store.reset_password("administrator", admin_password)
+        elif intervening_action == "logout":
+            store.logout(principal)
+        else:
+            store.clock = lambda: principal.expires_at
+        return True
+
+    monkeypatch.setattr(auth, "verify_password", verify_then_interleave)
+    with pytest.raises(ApiError) as exc:
+        store.change_password(principal, PASSWORD, "pending-password-change-773!")
+    assert exc.value.status == 401
+    with sqlite3.connect(db.path) as conn:
+        encoded = conn.execute("SELECT password_hash FROM auth_users").fetchone()[0]
+        audit_count = conn.execute("SELECT count(*) FROM access_audit WHERE action='password_reset'").fetchone()[0]
+    assert verify(admin_password if intervening_action == "reset" else PASSWORD, encoded)
+    assert audit_count == (1 if intervening_action == "reset" else 0)
+
+
 def test_idle_absolute_expiry_and_password_hash_salt(tmp_path):
     db, store = setup(tmp_path)
     store.create_user("second", PASSWORD, "viewer")

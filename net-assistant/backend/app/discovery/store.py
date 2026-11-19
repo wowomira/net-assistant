@@ -156,10 +156,12 @@ class Database:
         after = int(cursor or 0)
         if after < 0:
             raise ValueError("Invalid cursor.")
-        rows = list(session.scalars(statement.where(table.sequence > after)
-                                   .order_by(table.sequence).limit(limit + 1)))
-        return {"items": [mapper(row) for row in rows[:limit]],
-                "next_cursor": str(rows[limit - 1].sequence) if len(rows) > limit else None}
+        # The paginated entity is the first selected value. Additional joined
+        # columns can be mapped without running separate queries per item.
+        rows = session.execute(statement.where(table.sequence > after)
+                               .order_by(table.sequence).limit(limit + 1)).all()
+        return {"items": [mapper(*row) for row in rows[:limit]],
+                "next_cursor": str(rows[limit - 1][0].sequence) if len(rows) > limit else None}
 
     def list_jobs(self, limit: int = 50, cursor: str | None = None) -> dict:
         with Session(self.engine) as session:

@@ -101,6 +101,39 @@ def test_changed_ip_requires_confirmation_and_keeps_one_asset(registry):
     assert len(registry.list_assets()["items"]) == 1
 
 
+def test_asset_and_observation_pages_batch_queries_and_keep_unlinked_assets(registry):
+    from sqlalchemy import event
+
+    first, _ = observation(registry.db, observed_at="2026-11-14T10:00:00.000Z")
+    extra, _ = observation(registry.db, observed_at="2026-11-15T10:00:00.000Z")
+    removed, _ = observation(registry.db)
+    last, _ = observation(registry.db)
+    linked = registry.register(first, name="linked", reason="Initial registration")
+    registry.link(linked["id"], extra, expected_revision=1, reason="Confirm same device")
+    unlinked = registry.register(removed, name="unlinked", reason="Initial registration")
+    registry.unlink(unlinked["id"], removed, expected_revision=1, reason="Correct association")
+    final = registry.register(last, name="last", reason="Initial registration")
+
+    selects = []
+
+    @event.listens_for(registry.db.engine, "before_cursor_execute")
+    def record_select(conn, cursor, statement, parameters, context, executemany):
+        if statement.lstrip().upper().startswith("SELECT"):
+            selects.append(statement)
+
+    page = registry.list_assets(limit=2)
+    assert len(selects) == 1
+    assert [(asset["id"], asset["linked_observation_count"], asset["last_observed_at"])
+            for asset in page["items"]] == [
+        (linked["id"], 2, "2026-11-15T10:00:00.000Z"), (unlinked["id"], 0, None)]
+    assert registry.list_assets(limit=2, cursor=page["next_cursor"]) == {"items": [final], "next_cursor": None}
+
+    selects.clear()
+    observations = registry.list_observations(linked["id"])
+    assert len(selects) == 2  # Asset existence check, then the full page including host and scope.
+    assert [item["discovery_host_id"] for item in observations["items"]] == [first, extra]
+
+
 def test_same_ip_different_device_is_not_merged_or_given_old_permissions(registry):
     first, _ = observation(registry.db)
     second, _ = observation(registry.db, mac="00:11:22:33:44:66")

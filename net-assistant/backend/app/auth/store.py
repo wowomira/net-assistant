@@ -58,14 +58,15 @@ class AuthStore:
         self.clock = clock
 
     @contextmanager
-    def transaction(self):
-        # mode=rw never creates an empty working database on a failed HTTP request.
-        conn = sqlite3.connect(self.path.as_uri() + "?mode=rw", uri=True, timeout=5)
+    def transaction(self, *, readonly=False):
+        # Neither connection mode creates a database when setup is incomplete.
+        mode = "ro" if readonly else "rw"
+        conn = sqlite3.connect(self.path.as_uri() + f"?mode={mode}", uri=True, timeout=5)
         conn.row_factory = sqlite3.Row
         try:
             conn.execute("PRAGMA foreign_keys=ON")
             conn.execute("PRAGMA busy_timeout=5000")
-            conn.execute("BEGIN IMMEDIATE")
+            conn.execute("BEGIN" if readonly else "BEGIN IMMEDIATE")
             yield conn
             conn.commit()
         except BaseException:
@@ -105,16 +106,19 @@ class AuthStore:
             user = conn.execute("SELECT id FROM auth_users WHERE username=?", (username.lower(),)).fetchone()
             if not user:
                 raise ValueError("Unknown user.")
-            conn.execute("UPDATE auth_users SET password_hash=? WHERE id=?", (encoded, user["id"]))
-            conn.execute("UPDATE auth_sessions SET revoked=1 WHERE user_id=?", (user["id"],))
-            self.audit(conn, user["id"], "password_reset")
+            self._replace_password(conn, user["id"], encoded)
+
+    def _replace_password(self, conn, user_id, encoded):
+        conn.execute("UPDATE auth_users SET password_hash=? WHERE id=?", (encoded, user_id))
+        conn.execute("UPDATE auth_sessions SET revoked=1 WHERE user_id=?", (user_id,))
+        self.audit(conn, user_id, "password_reset")
 
     def login(self, username, password, address):
         now = self.clock()
         username = username.lower()
         keys = (digest("user:" + username), digest("ip:" + address))
         # Hashing happens outside the write transaction; failed attempts still atomically counted.
-        with self.transaction() as conn:
+        with self.transaction(readonly=True) as conn:
             for key, maximum in zip(keys, (5, 25)):
                 row = conn.execute("SELECT * FROM auth_throttles WHERE key=?", (key,)).fetchone()
                 if row and now - row["window_start"] < 300 and row["failures"] >= maximum:
@@ -155,26 +159,31 @@ class AuthStore:
     def authenticate(self, token) -> Principal | None:
         if not token or len(token) > 256:
             return None
-        now = self.clock()
+        token_hash = digest(token)
         with self.transaction() as conn:
+            now = self.clock()
             row = conn.execute("""SELECT u.id,u.username,u.role,u.enabled,s.* FROM auth_sessions s
-                JOIN auth_users u ON u.id=s.user_id WHERE token_hash=?""", (digest(token),)).fetchone()
+                JOIN auth_users u ON u.id=s.user_id WHERE token_hash=?""", (token_hash,)).fetchone()
             if not row or row["revoked"] or not row["enabled"]:
                 return None
             if row["expires_at"] <= now or now - row["last_seen_at"] >= 1800:
-                conn.execute("UPDATE auth_sessions SET revoked=1 WHERE token_hash=?", (digest(token),))
+                conn.execute("UPDATE auth_sessions SET revoked=1 WHERE token_hash=?", (token_hash,))
                 return None
-            conn.execute("UPDATE auth_sessions SET last_seen_at=? WHERE token_hash=?", (now, digest(token)))
-            return Principal(row["id"], row["username"], row["role"], digest(token), row["csrf"],
+            conn.execute("UPDATE auth_sessions SET last_seen_at=? WHERE token_hash=?", (now, token_hash))
+            return Principal(row["id"], row["username"], row["role"], token_hash, row["csrf"],
                              row["expires_at"])
 
-    def principal_active(self, principal):
+    def _active_user(self, conn, principal):
         now = self.clock()
-        with self.transaction() as conn:
-            row = conn.execute("""SELECT s.*,u.enabled FROM auth_sessions s JOIN auth_users u ON u.id=s.user_id
-                                  WHERE token_hash=?""", (principal.session_hash,)).fetchone()
-            return bool(row and row["enabled"] and not row["revoked"] and
-                        row["expires_at"] > now and now - row["last_seen_at"] < 1800)
+        return conn.execute("""SELECT u.password_hash FROM auth_sessions s
+            JOIN auth_users u ON u.id=s.user_id
+            WHERE s.token_hash=? AND u.id=? AND u.enabled=1 AND s.revoked=0
+              AND s.expires_at>? AND s.last_seen_at>?""",
+            (principal.session_hash, principal.id, now, now - 1800)).fetchone()
+
+    def principal_active(self, principal):
+        with self.transaction(readonly=True) as conn:
+            return self._active_user(conn, principal) is not None
 
     def logout(self, principal):
         with self.transaction() as conn:
@@ -182,8 +191,17 @@ class AuthStore:
             self.audit(conn, principal.id, "logout")
 
     def change_password(self, principal, current_password, new_password):
-        with self.transaction() as conn:
-            row = conn.execute("SELECT password_hash FROM auth_users WHERE id=?", (principal.id,)).fetchone()
-        if not row or not verify_password(current_password, row["password_hash"]):
+        with self.transaction(readonly=True) as conn:
+            user = self._active_user(conn, principal)
+        if not user:
+            raise ApiError(401, "authentication_required", "请先登录平台。")
+        if not verify_password(current_password, user["password_hash"]):
             raise ApiError(401, "invalid_credentials", "当前密码错误。")
-        self.reset_password(principal.username, new_password)
+        encoded = password_hash(new_password)
+        # scrypt runs outside the write lock. Recheck both the authorizing session
+        # and the verified password under the lock before the credential update.
+        with self.transaction() as conn:
+            fresh = self._active_user(conn, principal)
+            if not fresh or fresh["password_hash"] != user["password_hash"]:
+                raise ApiError(401, "authentication_required", "请先登录平台。")
+            self._replace_password(conn, principal.id, encoded)
